@@ -27,8 +27,8 @@ import { SpeakerWaveIcon, SpeakerXMarkIcon, ArrowRightOnRectangleIcon, WrenchScr
 import { api } from './api';
 
 const musicTracks = {
-  menu: 'music/menu.wav',
-  game: 'music/in-game.wav',
+  menu: '/music/menu.wav',
+  game: '/music/in-game.wav',
   congrats: 'music/congrat.wav',
 };
 
@@ -66,15 +66,24 @@ const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const handleUpdateSession = useCallback(async () => {
-    if (session.user?.id) {
-      const { user } = await api.getUserById(session.user.id);
+  const refreshSessionData = useCallback(async () => {
+    const userId = localStorage.getItem('excelSagaSession');
+    if (userId) {
+      const { user } = await api.getUserById(userId);
       if (user) {
         setSession({ user, isLoading: false });
         setLevelCompletion(user.progress);
       }
     }
-  }, [session.user?.id]);
+  }, []);
+
+  const handleUserUpdate = useCallback((updatedUser: User) => {
+    if (session.user && session.user.id !== updatedUser.id) {
+        localStorage.setItem('excelSagaSession', updatedUser.id);
+    }
+    setSession({ user: updatedUser, isLoading: false });
+    setLevelCompletion(updatedUser.progress);
+  }, [session.user]);
 
   // Check for an active session on initial load
   useEffect(() => {
@@ -216,7 +225,7 @@ const App: React.FC = () => {
         if (!session.user.certificate) {
             const { certificate } = await api.createCertificate(session.user.id, session.user.fullName || session.user.id);
             if (certificate) {
-                await handleUpdateSession(); // Refresh user data to include certificate
+                await refreshSessionData(); // Refresh user data to include certificate
             }
         }
         setGameState(GameState.Certificate);
@@ -230,7 +239,7 @@ const App: React.FC = () => {
         setCompletedPart(partIndex + 1);
         setGameState(GameState.Congratulations);
     }
-  }, [levelCompletion, session.user, handleUpdateSession]);
+  }, [levelCompletion, session.user, refreshSessionData]);
 
   const handleNextLevel = useCallback(() => {
     if (currentLevel < levelData.length - 1) {
@@ -349,7 +358,7 @@ const App: React.FC = () => {
                     user={session.user}
                     onSelectPart={handleSelectPart}
                     levelCompletion={levelCompletion} 
-                    onBecomeMember={handleUpdateSession}
+                    onBecomeMember={refreshSessionData}
                     onGoToArcade={handleGoToArcade}
                 />
             )}
@@ -390,7 +399,7 @@ const App: React.FC = () => {
                 <ProfileScreen 
                     user={session.user} 
                     onBack={handleBackToGame} 
-                    onUpdateSuccess={handleUpdateSession}
+                    onUpdateSuccess={handleUserUpdate}
                 />
             )}
 

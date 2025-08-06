@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { api } from '../api';
 import type { User, LevelCompletionStatus, CertificateRecord, CertificateSettings } from '../types';
 import { levelData } from '../constants';
-import { ArrowUturnLeftIcon, UserCircleIcon, UsersIcon, ChartPieIcon, UserPlusIcon, ArrowDownTrayIcon, KeyIcon, ArrowPathIcon, EllipsisVerticalIcon, CheckCircleIcon, XCircleIcon, StarIcon, TrashIcon, TrophyIcon, EyeIcon, PaintBrushIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
+import { ArrowUturnLeftIcon, UserCircleIcon, UsersIcon, ChartPieIcon, UserPlusIcon, ArrowDownTrayIcon, KeyIcon, ArrowPathIcon, EllipsisVerticalIcon, CheckCircleIcon, XCircleIcon, StarIcon, TrashIcon, TrophyIcon, EyeIcon, PaintBrushIcon, DocumentTextIcon, PencilSquareIcon, PhoneIcon } from '@heroicons/react/24/solid';
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 import { CertificateTemplate } from './CertificateTemplate';
@@ -293,11 +294,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const [openActionMenuFor, setOpenActionMenuFor] = useState<string | null>(null);
-  const [updatingProgressFor, setUpdatingProgressFor] = useState<string | null>(null);
+  const [updatingUserFor, setUpdatingUserFor] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error', message: string} | null>(null);
   const actionMenuRef = useRef<HTMLDivElement>(null);
   
   const [viewingCertificate, setViewingCertificate] = useState<CertificateRecord | null>(null);
+
+  // Modal States
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [resettingPasswordForUser, setResettingPasswordForUser] = useState<User | null>(null);
+  const [modalFeedback, setModalFeedback] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [isSavingUser, setIsSavingUser] = useState(false);
+  const [newPasswordForReset, setNewPasswordForReset] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -339,6 +350,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openActionMenuFor]);
+  
+  useEffect(() => {
+    if (editingUser) {
+        setEditFullName(editingUser.fullName || '');
+        setEditPhone(editingUser.phone || '');
+        setModalFeedback(null);
+    }
+  }, [editingUser]);
+
+  useEffect(() => {
+    if (resettingPasswordForUser) {
+        setNewPasswordForReset('');
+        setModalFeedback(null);
+    }
+  }, [resettingPasswordForUser]);
 
   const dashboardStats = useMemo(() => {
     if (!users.length) {
@@ -451,7 +477,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   };
 
   const handleUpdateProgress = async (userId: string, progress: LevelCompletionStatus) => {
-    setUpdatingProgressFor(userId);
+    setUpdatingUserFor(userId);
     setActionFeedback(null);
     try {
         const { success } = await api.saveProgress(userId, progress);
@@ -464,13 +490,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
     } catch (err: any) {
         setActionFeedback({ type: 'error', message: err.message });
     } finally {
-        setUpdatingProgressFor(null);
+        setUpdatingUserFor(null);
+        setOpenActionMenuFor(null);
+    }
+  };
+
+  const handleToggleMembership = async (userId: string, isMember: boolean) => {
+    setUpdatingUserFor(userId);
+    setActionFeedback(null);
+    try {
+        const { success, error } = await api.updateUserMembership(userId, isMember);
+        if (success) {
+            setActionFeedback({ type: 'success', message: `Membership pengguna berhasil ${isMember ? 'diberikan' : 'dihapus'}!` });
+            await fetchAllData();
+        } else {
+            throw new Error(error || 'Gagal mengubah status membership.');
+        }
+    } catch (err: any) {
+        setActionFeedback({ type: 'error', message: err.message });
+    } finally {
+        setUpdatingUserFor(null);
         setOpenActionMenuFor(null);
     }
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (window.confirm(`Anda yakin ingin menghapus pengguna "${userName || userId}"? Tindakan ini tidak dapat diurungkan.`)) {
+        setUpdatingUserFor(userId);
         setActionFeedback(null);
         try {
             const { success, error } = await api.deleteUser(userId);
@@ -483,9 +529,98 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
         } catch (err: any) {
             setActionFeedback({ type: 'error', message: err.message });
         } finally {
+            setUpdatingUserFor(null);
             setOpenActionMenuFor(null);
         }
     }
+  };
+
+  const handleCreateCertificate = async (userId: string, userName: string) => {
+    setUpdatingUserFor(userId);
+    setActionFeedback(null);
+    try {
+        const { certificate, error } = await api.createCertificate(userId, userName);
+        if (error) {
+            throw new Error(error);
+        }
+        if (certificate) {
+            setActionFeedback({ type: 'success', message: 'Sertifikat berhasil dibuat!' });
+            await fetchAllData();
+        } else {
+            throw new Error('Gagal membuat sertifikat karena alasan yang tidak diketahui.');
+        }
+    } catch (err: any) {
+        setActionFeedback({ type: 'error', message: err.message });
+    } finally {
+        setUpdatingUserFor(null);
+        setOpenActionMenuFor(null);
+    }
+  };
+
+  const handleDeleteCertificate = async (userId: string) => {
+      if (window.confirm('Anda yakin ingin menghapus sertifikat pengguna ini?')) {
+          setUpdatingUserFor(userId);
+          setActionFeedback(null);
+          try {
+              const { success, error } = await api.deleteCertificate(userId);
+              if (success) {
+                  setActionFeedback({ type: 'success', message: 'Sertifikat berhasil dihapus.' });
+                  await fetchAllData();
+              } else {
+                  throw new Error(error || 'Gagal menghapus sertifikat.');
+              }
+          } catch (err: any) {
+              setActionFeedback({ type: 'error', message: err.message });
+          } finally {
+              setUpdatingUserFor(null);
+              setOpenActionMenuFor(null);
+          }
+      }
+  };
+
+  const handleEditUserSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!editingUser) return;
+      setIsSavingUser(true);
+      setModalFeedback(null);
+      try {
+          const { success, error } = await api.updateUserProfile(editingUser.id, {fullName: editFullName, phone: editPhone, email: editingUser.id});
+          if (success) {
+              setModalFeedback({type: 'success', message: 'Profil berhasil diperbarui!'});
+              await fetchAllData();
+              setTimeout(() => {
+                  setEditingUser(null);
+              }, 1500);
+          } else {
+              throw new Error(error || 'Gagal memperbarui profil.');
+          }
+      } catch (err: any) {
+          setModalFeedback({type: 'error', message: err.message});
+      } finally {
+          setIsSavingUser(false);
+      }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!resettingPasswordForUser) return;
+      setIsResettingPassword(true);
+      setModalFeedback(null);
+      try {
+          const { success, error } = await api.adminResetPassword(resettingPasswordForUser.id, newPasswordForReset);
+          if (success) {
+              setModalFeedback({type: 'success', message: 'Password berhasil direset!'});
+              setTimeout(() => {
+                  setResettingPasswordForUser(null);
+              }, 1500);
+          } else {
+              throw new Error(error || 'Gagal mereset password.');
+          }
+      } catch (err: any) {
+          setModalFeedback({type: 'error', message: err.message});
+      } finally {
+          setIsResettingPassword(false);
+      }
   };
 
   const handleExportUsers = () => {
@@ -532,6 +667,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   return (
     <div className="max-w-7xl mx-auto">
       {viewingCertificate && <CertificatePreviewModal certificate={viewingCertificate} onClose={() => setViewingCertificate(null)} />}
+      
+      {editingUser && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
+              <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-lg font-bold mb-4 text-slate-800">Ubah Pengguna: <span className="font-normal">{editingUser.fullName || editingUser.id}</span></h3>
+                  <form onSubmit={handleEditUserSubmit} className="space-y-4">
+                       <div>
+                            <label htmlFor="editFullName" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><UserCircleIcon className="w-4 h-4"/>Nama Lengkap</label>
+                            <input id="editFullName" type="text" value={editFullName} onChange={e => setEditFullName(e.target.value)} className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500" required disabled={isSavingUser}/>
+                        </div>
+                        <div>
+                            <label htmlFor="editPhone" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><PhoneIcon className="w-4 h-4"/>Nomor HP</label>
+                            <input id="editPhone" type="tel" value={editPhone} onChange={e => setEditPhone(e.target.value)} className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500" required disabled={isSavingUser}/>
+                        </div>
+                      {modalFeedback && <div className={`p-2 rounded-md text-sm text-center ${modalFeedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{modalFeedback.message}</div>}
+                      <div className="flex justify-end gap-2 pt-2">
+                          <button type="button" onClick={() => setEditingUser(null)} className="px-4 py-2 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition-colors">Batal</button>
+                          <button type="submit" className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:bg-green-400" disabled={isSavingUser}>{isSavingUser ? 'Menyimpan...' : 'Simpan'}</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
+
+      {resettingPasswordForUser && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setResettingPasswordForUser(null)}>
+              <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-lg font-bold mb-4 text-slate-800">Reset Password: <span className="font-normal">{resettingPasswordForUser.id}</span></h3>
+                  <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+                       <div>
+                            <label htmlFor="newPasswordForReset" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><KeyIcon className="w-4 h-4"/>Password Baru</label>
+                            <input id="newPasswordForReset" type="text" value={newPasswordForReset} onChange={e => setNewPasswordForReset(e.target.value)} placeholder="Minimal 6 karakter" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" required disabled={isResettingPassword}/>
+                        </div>
+                      {modalFeedback && <div className={`p-2 rounded-md text-sm text-center ${modalFeedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{modalFeedback.message}</div>}
+                      <div className="flex justify-end gap-2 pt-2">
+                          <button type="button" onClick={() => setResettingPasswordForUser(null)} className="px-4 py-2 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition-colors">Batal</button>
+                          <button type="submit" className="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition disabled:bg-sky-400" disabled={isResettingPassword || newPasswordForReset.length < 6}>{isResettingPassword ? 'Mereset...' : 'Reset Password'}</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
             <h2 className="text-2xl font-bold text-slate-800">Admin Panel</h2>
@@ -636,7 +814,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                                 <thead className="text-xs text-slate-700 uppercase bg-slate-100">
                                     <tr>
                                         <th scope="col" className="px-4 py-3">Nama</th>
-                                        <th scope="col" className="px-4 py-3">Email</th>
+                                        <th scope="col" className="px-4 py-3">User ID (Email)</th>
                                         <th scope="col" className="px-4 py-3">Tipe</th>
                                         <th scope="col" className="px-4 py-3">Progres</th>
                                         <th scope="col" className="px-4 py-3">Member</th>
@@ -662,14 +840,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                                                     <EllipsisVerticalIcon className="w-5 h-5 text-slate-500 hover:text-slate-800" />
                                                 </button>
                                                 {openActionMenuFor === u.id && (
-                                                    <div ref={actionMenuRef} className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-10">
+                                                    <div ref={actionMenuRef} className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-10">
+                                                         <button onClick={() => { setEditingUser(u); setOpenActionMenuFor(null); }} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                                                            <PencilSquareIcon className="w-4 h-4"/> Edit Pengguna
+                                                        </button>
+                                                        {u.type === 'password' && (
+                                                            <button onClick={() => { setResettingPasswordForUser(u); setOpenActionMenuFor(null); }} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                                                                <KeyIcon className="w-4 h-4"/> Reset Password
+                                                            </button>
+                                                        )}
+                                                        <div className="border-t my-1"></div>
+                                                        {u.isMember ? (
+                                                            <button onClick={() => handleToggleMembership(u.id, false)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50">
+                                                                <StarIcon className="w-4 h-4"/> Hapus Membership
+                                                            </button>
+                                                        ) : (
+                                                            <button onClick={() => handleToggleMembership(u.id, true)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50">
+                                                                <StarIcon className="w-4 h-4"/> Jadikan Member
+                                                            </button>
+                                                        )}
+                                                        <div className="border-t my-1"></div>
                                                         <button onClick={() => handleUpdateProgress(u.id, getOpenProgressStatus())} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Buka semua level</button>
                                                         <button onClick={() => handleUpdateProgress(u.id, getResetProgressStatus())} className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100">Reset progres</button>
                                                         <div className="border-t my-1"></div>
-                                                        <button onClick={() => handleDeleteUser(u.id, u.fullName || u.id)} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Hapus pengguna</button>
+                                                        {u.certificate ? (
+                                                             <button onClick={() => handleDeleteCertificate(u.id)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50">
+                                                                <TrashIcon className="w-4 h-4"/> Hapus Sertifikat
+                                                            </button>
+                                                        ) : (
+                                                            <button onClick={() => handleCreateCertificate(u.id, u.fullName || u.id)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50">
+                                                                <TrophyIcon className="w-4 h-4"/> Buat Sertifikat
+                                                            </button>
+                                                        )}
+                                                        <div className="border-t my-1"></div>
+                                                        <button onClick={() => handleDeleteUser(u.id, u.fullName || u.id)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                            <TrashIcon className="w-4 h-4"/> Hapus pengguna
+                                                        </button>
                                                     </div>
                                                 )}
-                                                {updatingProgressFor === u.id && <ArrowPathIcon className="w-5 h-5 text-sky-500 animate-spin" />}
+                                                {updatingUserFor === u.id && <ArrowPathIcon className="w-5 h-5 text-sky-500 animate-spin" />}
                                                 </div>
                                             </td>
                                         </tr>

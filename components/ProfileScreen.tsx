@@ -3,12 +3,12 @@ import React, { useState, useMemo, useCallback } from 'react';
 import type { User } from '../types';
 import { api } from '../api';
 import { levelData } from '../constants';
-import { ArrowUturnLeftIcon, UserCircleIcon, PhoneIcon, KeyIcon, CheckCircleIcon, XCircleIcon, StarIcon } from '@heroicons/react/24/solid';
+import { ArrowUturnLeftIcon, UserCircleIcon, PhoneIcon, KeyIcon, CheckCircleIcon, XCircleIcon, StarIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 
 interface ProfileScreenProps {
   user: User;
   onBack: () => void;
-  onUpdateSuccess: () => void;
+  onUpdateSuccess: (user: User) => void;
 }
 
 const ProgressBar: React.FC<{ value: number, color?: string }> = ({ value, color = 'bg-green-500' }) => {
@@ -24,6 +24,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onBack, onUp
     // Profile Edit State
     const [fullName, setFullName] = useState(user.fullName || '');
     const [phone, setPhone] = useState(user.phone || '');
+    const [email, setEmail] = useState(user.id);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [profileFeedback, setProfileFeedback] = useState<{ type: 'success' | 'error', message: string} | null>(null);
 
@@ -64,10 +65,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onBack, onUp
         setIsSavingProfile(true);
         setProfileFeedback(null);
         try {
-            const { success, error } = await api.updateUserProfile(user.id, fullName, phone);
-            if (success) {
-                setProfileFeedback({ type: 'success', message: 'Profil berhasil diperbarui!' });
-                onUpdateSuccess();
+            const { success, user: updatedUser, error } = await api.updateUserProfile(user.id, { fullName, phone, email });
+            if (success && updatedUser) {
+                let message = 'Profil berhasil diperbarui!';
+                if (user.id !== updatedUser.id) {
+                    message = 'Profil & Email berhasil diperbarui! Sesi Anda telah diperbarui secara otomatis.'
+                }
+                setProfileFeedback({ type: 'success', message });
+                onUpdateSuccess(updatedUser);
             } else {
                 throw new Error(error || 'Gagal memperbarui profil.');
             }
@@ -77,7 +82,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onBack, onUp
             setIsSavingProfile(false);
             setTimeout(() => setProfileFeedback(null), 5000);
         }
-    }, [user.id, fullName, phone, onUpdateSuccess]);
+    }, [user.id, fullName, phone, email, onUpdateSuccess]);
 
     const handlePasswordUpdate = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -170,6 +175,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onBack, onUp
                                     Nomor HP
                                 </label>
                                 <input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Masukkan nomor HP" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500" required disabled={isSavingProfile}/>
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+                                    <EnvelopeIcon className="w-4 h-4 inline-block mr-1 align-text-bottom" />
+                                    Email
+                                </label>
+                                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Masukkan email" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500" required disabled={isSavingProfile}/>
                             </div>
                             <div className="flex items-center gap-4">
                                <button type="submit" className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition disabled:bg-green-400" disabled={isSavingProfile}>

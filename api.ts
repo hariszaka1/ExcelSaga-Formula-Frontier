@@ -1,3 +1,4 @@
+
 import { db, saveDb } from './database';
 import { levelData } from './constants';
 import type { LevelCompletionStatus, UserView, User, CertificateRecord, CertificateSettings } from './types';
@@ -174,17 +175,50 @@ export const api = {
     })
   },
   
-  updateUserProfile: (userId: string, fullName: string, phone: string): Promise<{ success: boolean, user?: User, error?: string }> => {
+  updateUserProfile: (userId: string, updates: { fullName: string; phone: string; email: string; }): Promise<{ success: boolean, user?: User, error?: string }> => {
     return new Promise((resolve) => {
         setTimeout(() => {
             const user = db.users[userId];
-            if(user) {
-                user.fullName = fullName;
-                user.phone = phone;
+            if(!user) {
+                return resolve({ success: false, error: "User not found" });
+            }
+
+            const newEmail = updates.email.toLowerCase();
+
+            // Case 1: Email is changed
+            if (newEmail !== userId.toLowerCase()) {
+                if (db.users[newEmail]) {
+                    return resolve({ success: false, error: "Email baru sudah terdaftar. Gunakan email lain." });
+                }
+
+                const newUser: User = { 
+                    ...user,
+                    id: newEmail,
+                    fullName: updates.fullName,
+                    phone: updates.phone,
+                };
+                
+                // Update certificate if it exists
+                if (newUser.certificate) {
+                    const certId = newUser.certificate.id;
+                    newUser.certificate.userId = newEmail;
+                    if(db.certificates[certId]) {
+                        db.certificates[certId].userId = newEmail;
+                    }
+                }
+                
+                db.users[newEmail] = newUser;
+                delete db.users[userId];
+                
+                saveDb();
+                resolve({ success: true, user: newUser });
+            } 
+            // Case 2: Email is not changed, just update profile
+            else {
+                user.fullName = updates.fullName;
+                user.phone = updates.phone;
                 saveDb();
                 resolve({ success: true, user });
-            } else {
-                resolve({ success: false, error: "User not found" });
             }
         }, NETWORK_DELAY)
     })
@@ -241,7 +275,7 @@ export const api = {
               const newCertificate: CertificateRecord = {
                   id: generateCertificateId(),
                   userId: user.id,
-                  userName: fullName,
+                  userName: fullName || user.id,
                   issuedAt: Date.now(),
               };
 
@@ -252,6 +286,45 @@ export const api = {
               resolve({ certificate: newCertificate });
           }, NETWORK_DELAY);
       });
+  },
+
+  adminResetPassword: (userId: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const user = db.users[userId];
+        if (!user) {
+          return resolve({ success: false, error: 'Pengguna tidak ditemukan.' });
+        }
+        if (user.type !== 'password') {
+          return resolve({ success: false, error: 'Hanya bisa mereset password untuk pengguna tipe `password`.' });
+        }
+        if (newPassword.length < 6) {
+          return resolve({ success: false, error: 'Password baru harus minimal 6 karakter.' });
+        }
+        user.password = newPassword;
+        saveDb();
+        resolve({ success: true });
+      }, NETWORK_DELAY);
+    });
+  },
+
+  deleteCertificate: (userId: string): Promise<{ success: boolean; error?: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const user = db.users[userId];
+        if (!user) {
+          return resolve({ success: false, error: "Pengguna tidak ditemukan." });
+        }
+        if (!user.certificate) {
+          return resolve({ success: false, error: "Pengguna tidak memiliki sertifikat." });
+        }
+        const certId = user.certificate.id;
+        delete db.certificates[certId];
+        delete user.certificate;
+        saveDb();
+        resolve({ success: true });
+      }, NETWORK_DELAY);
+    });
   },
 
   getCertificates: (): Promise<{ certificates: CertificateRecord[] }> => {
