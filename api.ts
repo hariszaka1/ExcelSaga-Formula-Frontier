@@ -136,4 +136,29 @@ export const api = {
     // Untuk mendapatkan data user, gunakan supabase.auth.getUser() di halaman setelah redirect
     return { user: null, error: error?.message || null };
   },
+  async ensureDefaultAdmin() {
+  const adminEmail = 'admin@excel.saga';
+  const adminPassword = '123';
+  // Cek apakah admin sudah ada di Supabase Auth
+  const { data: users } = await supabase.from('users').select('*').eq('id', adminEmail);
+  if (!users || users.length === 0) {
+    // Register admin di Supabase Auth
+    const { data, error } = await supabase.auth.signUp({ email: adminEmail, password: adminPassword });
+    if (!error && data?.user) {
+      // Tambahkan ke tabel users
+      const newAdmin: User = {
+        id: data.user.id,
+        type: 'password',
+        password: adminPassword,
+        fullName: 'Admin',
+        phone: '',
+        progress: getDefaultCompletionStatus(),
+        isAdmin: true,
+        isMember: false,
+        createdAt: Date.now(),
+      };
+      await supabase.from('users').insert([newAdmin]);
+    }
+  }
+},
 };

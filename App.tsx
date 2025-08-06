@@ -87,6 +87,9 @@ const App: React.FC = () => {
 
   // Check for an active session on initial load
   useEffect(() => {
+  api.ensureDefaultAdmin();
+}, []);
+  useEffect(() => {
     const checkSession = async () => {
       const userId = localStorage.getItem('excelSagaSession');
       if (userId) {
