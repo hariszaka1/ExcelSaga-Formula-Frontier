@@ -6,21 +6,23 @@ import { LockClosedIcon } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
   levels: Level[];
+  partOffset: number;
   currentLevelIndex: number;
   completionStatus: LevelCompletionStatus;
   onSelectLevel: (index: number) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ levels, currentLevelIndex, completionStatus, onSelectLevel }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ levels, partOffset, currentLevelIndex, completionStatus, onSelectLevel }) => {
   return (
     <aside className="w-full lg:w-1/4 bg-white rounded-2xl shadow-lg border border-slate-200 p-4 lg:sticky lg:top-8 self-start">
       <h3 className="font-bold text-xl mb-4 text-center text-slate-700">Peta Level</h3>
       <nav>
         <ul className="space-y-2">
           {levels.map((level, index) => {
-            const isCompleted = completionStatus[index];
-            const isCurrent = index === currentLevelIndex;
-            const isUnlocked = index === 0 || completionStatus[index - 1];
+            const globalIndex = index + partOffset;
+            const isCompleted = completionStatus[globalIndex];
+            const isCurrent = globalIndex === currentLevelIndex;
+            const isUnlocked = globalIndex === 0 || completionStatus[globalIndex - 1];
 
             let statusIcon;
             if (isCompleted) {
@@ -36,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ levels, currentLevelIndex, com
             return (
               <li key={level.id}>
                 <button
-                  onClick={() => isUnlocked && onSelectLevel(index)}
+                  onClick={() => isUnlocked && onSelectLevel(globalIndex)}
                   disabled={!isUnlocked}
                   className={`w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors duration-200
                     ${isCurrent ? 'bg-green-100 font-bold text-green-800' : ''}
