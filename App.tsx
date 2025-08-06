@@ -29,7 +29,7 @@ import { api } from './api';
 const musicTracks = {
   menu: 'music/menu.wav',
   game: 'music/in-game.wav',
-  congrats: 'musiccongrat.wav',
+  congrats: 'music/congrat.wav',
 };
 
 interface SessionState {
