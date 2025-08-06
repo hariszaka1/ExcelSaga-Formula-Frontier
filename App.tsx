@@ -27,8 +27,8 @@ import { SpeakerWaveIcon, SpeakerXMarkIcon, ArrowRightOnRectangleIcon, WrenchScr
 import { api } from './api';
 
 const musicTracks = {
-  menu: '/music/menu.wav',
-  game: '/music/in-game.wav',
+  menu: 'music/menu.wav',
+  game: 'music/in-game.wav',
   congrats: 'music/congrat.wav',
 };
 
