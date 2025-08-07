@@ -78,6 +78,13 @@ export interface CertificateSettings {
   signerTitle: string;
 }
 
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireNumber: boolean;
+  requireSpecialChar: boolean;
+}
+
 export interface User {
   id: string; // email
   type: 'password' | 'google';

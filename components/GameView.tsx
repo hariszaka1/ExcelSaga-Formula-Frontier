@@ -5,8 +5,7 @@ import { MascotState } from '../types';
 import { Sidebar } from './Sidebar';
 import { GameTable } from './GameTable';
 import { ActionPanel } from './ActionPanel';
-import { ChevronUpIcon, ChevronDownIcon, StarIcon } from '@heroicons/react/24/solid';
-import { geminiService } from '../services/geminiService';
+import { ChevronUpIcon, ChevronDownIcon, LightBulbIcon } from '@heroicons/react/24/solid';
 
 const renderExplanation = (text: string) => {
     if (!text) return { __html: '' };
@@ -61,8 +60,6 @@ export const GameView: React.FC<GameViewProps> = ({
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
   const [hint, setHint] = useState('');
-  const [isAiHint, setIsAiHint] = useState(false);
-  const [isHintLoading, setIsHintLoading] = useState(false);
   const [mascotState, setMascotState] = useState<MascotState>(MascotState.Idle);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
@@ -80,8 +77,6 @@ export const GameView: React.FC<GameViewProps> = ({
     setUserAnswer('');
     setFeedback('');
     setHint('');
-    setIsAiHint(false);
-    setIsHintLoading(false);
     setShowAnswer(false);
     setShowAlternatives(false);
     setMascotState(MascotState.Idle);
@@ -116,22 +111,11 @@ export const GameView: React.FC<GameViewProps> = ({
     }
   }, [currentQuestion, userAnswer, onLevelComplete, levelIndex]);
 
-  const handleGetHint = useCallback(async () => {
+  const handleGetHint = useCallback(() => {
     if (currentQuestion) {
-        setIsHintLoading(true);
-        setHint('');
-        setIsAiHint(true);
-        try {
-            const aiHint = await geminiService.getAiHint(currentQuestion.challenge, level.table);
-            setHint(aiHint);
-        } catch (e) {
-            setHint(currentQuestion.hint);
-            setIsAiHint(false);
-        } finally {
-            setIsHintLoading(false);
-        }
+        setHint(currentQuestion.hint);
     }
-  }, [currentQuestion, level.table]);
+  }, [currentQuestion]);
 
   const handleToggleAnswer = () => {
     if (showAnswer) {
@@ -270,17 +254,13 @@ export const GameView: React.FC<GameViewProps> = ({
           </div>
         )}
 
-         {(hint || isHintLoading) && (
+         {hint && (
             <div className="mt-4 p-4 rounded-lg bg-yellow-100 border border-yellow-200 text-yellow-800">
                 <p className="font-bold mb-1 flex items-center gap-1.5">
-                    {isAiHint && <StarIcon className="w-5 h-5 text-yellow-600" />}
-                    Petunjuk{isAiHint ? ' AI' : ''}:
+                    <LightBulbIcon className="w-5 h-5 text-yellow-600" />
+                    Petunjuk:
                 </p>
-                {isHintLoading ? (
-                    <p className="animate-pulse">AI sedang berpikir...</p>
-                ) : (
-                    <p>{hint}</p>
-                )}
+                <p>{hint}</p>
             </div>
         )}
       </main>
@@ -291,7 +271,6 @@ export const GameView: React.FC<GameViewProps> = ({
         isAnsweredCorrectly={isAnsweredCorrectly}
         isOverallLevelCompleted={isOverallLevelCompleted}
         showAnswer={showAnswer}
-        isHintLoading={isHintLoading}
         onGetHint={handleGetHint}
         onToggleAnswer={handleToggleAnswer}
         onNextLevel={onNextLevel}

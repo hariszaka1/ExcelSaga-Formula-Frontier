@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Mascot } from './Mascot';
 import { MascotState } from '../types';
@@ -10,7 +9,6 @@ interface ActionPanelProps {
     isAnsweredCorrectly: boolean;
     isOverallLevelCompleted: boolean;
     showAnswer: boolean;
-    isHintLoading: boolean;
     onGetHint: () => void;
     onToggleAnswer: () => void;
     onNextLevel: () => void;
@@ -23,7 +21,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
     isAnsweredCorrectly,
     isOverallLevelCompleted,
     showAnswer,
-    isHintLoading,
     onGetHint,
     onToggleAnswer,
     onNextLevel,
@@ -38,11 +35,11 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 flex flex-col gap-3">
                 <button 
                     onClick={onGetHint} 
-                    disabled={!!hint || isAnsweredCorrectly || isHintLoading} 
+                    disabled={!!hint || isAnsweredCorrectly} 
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 text-yellow-900 font-bold rounded-lg shadow-md hover:bg-yellow-500 transition disabled:bg-slate-400 disabled:cursor-not-allowed"
                 >
                     <LightBulbIcon className="w-5 h-5" />
-                    {isHintLoading ? 'AI Berpikir...' : 'Petunjuk'}
+                    Petunjuk
                 </button>
                 <button onClick={onToggleAnswer} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-400 text-amber-900 font-bold rounded-lg shadow-md hover:bg-amber-500 transition">
                     <KeyIcon className="w-5 h-5" />

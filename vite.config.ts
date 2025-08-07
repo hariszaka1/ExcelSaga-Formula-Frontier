@@ -4,7 +4,7 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/ExcelSaga-Formula-Frontier/', // ← WAJIB sesuai nama repo
+    base: '/ExcelSaga-Formula-Frontier/', // Ganti sesuai nama repo GitHub kamu
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)

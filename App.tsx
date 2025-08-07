@@ -87,9 +87,6 @@ const App: React.FC = () => {
 
   // Check for an active session on initial load
   useEffect(() => {
-  api.ensureDefaultAdmin();
-}, []);
-  useEffect(() => {
     const checkSession = async () => {
       const userId = localStorage.getItem('excelSagaSession');
       if (userId) {
@@ -122,12 +119,12 @@ const App: React.FC = () => {
         case GameState.InGame:
             targetTrack = musicTracks.game;
             break;
-        case GameState.Congratulations:
         case GameState.Certificate:
             targetTrack = musicTracks.congrats;
             break;
         case GameState.PartSelection:
         case GameState.LevelSelection:
+        case GameState.Congratulations:
         case GameState.MiniGameArcade:
         case GameState.FormulaRacer:
         case GameState.CellFinder:

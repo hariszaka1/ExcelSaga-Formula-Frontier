@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { api } from '../api';
-import type { User, LevelCompletionStatus, CertificateRecord, CertificateSettings } from '../types';
+import type { User, LevelCompletionStatus, CertificateRecord, CertificateSettings, PasswordPolicy } from '../types';
 import { levelData } from '../constants';
-import { ArrowUturnLeftIcon, UserCircleIcon, UsersIcon, ChartPieIcon, UserPlusIcon, ArrowDownTrayIcon, KeyIcon, ArrowPathIcon, EllipsisVerticalIcon, CheckCircleIcon, XCircleIcon, StarIcon, TrashIcon, TrophyIcon, EyeIcon, PaintBrushIcon, DocumentTextIcon, PencilSquareIcon, PhoneIcon } from '@heroicons/react/24/solid';
+import { ArrowUturnLeftIcon, UserCircleIcon, UsersIcon, ChartPieIcon, UserPlusIcon, ArrowDownTrayIcon, KeyIcon, ArrowPathIcon, EllipsisVerticalIcon, CheckCircleIcon, XCircleIcon, StarIcon, TrashIcon, TrophyIcon, EyeIcon, PaintBrushIcon, DocumentTextIcon, PencilSquareIcon, PhoneIcon, ShieldCheckIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 import { CertificateTemplate } from './CertificateTemplate';
@@ -274,6 +273,91 @@ const CertificateSettingsEditor: React.FC = () => {
     );
 };
 
+const PasswordPolicyEditor: React.FC = () => {
+    const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [feedback, setFeedback] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+    useEffect(() => {
+        api.getPasswordPolicy().then(res => {
+            setPolicy(res.policy);
+            setIsLoading(false);
+        });
+    }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
+        if (policy) {
+            setPolicy({
+                ...policy,
+                [name]: type === 'checkbox' ? checked : parseInt(value, 10)
+            });
+        }
+    };
+
+    const handleSave = async () => {
+        if (!policy) return;
+        setIsSaving(true);
+        setFeedback(null);
+        try {
+            const { success, error } = await api.updatePasswordPolicy(policy);
+            if (success) {
+                setFeedback({type: 'success', message: 'Kebijakan password berhasil disimpan!'});
+            } else {
+                throw new Error(error || 'Gagal menyimpan kebijakan.');
+            }
+        } catch (err: any) {
+            setFeedback({type: 'error', message: `Gagal: ${err.message}`});
+        } finally {
+            setIsSaving(false);
+            setTimeout(() => setFeedback(null), 5000);
+        }
+    };
+
+    if (isLoading) {
+        return <p className="text-center text-slate-500 py-10">Memuat kebijakan...</p>;
+    }
+    
+    if (!policy) {
+        return <p className="text-center text-red-500 py-10">Gagal memuat kebijakan password.</p>;
+    }
+
+    return (
+        <div className="space-y-4 max-w-lg">
+            <div>
+                <label htmlFor="minLength" className="block text-sm font-medium text-slate-700">Panjang Minimal</label>
+                <input type="number" id="minLength" name="minLength" value={policy.minLength} onChange={handleInputChange} className="mt-1 block w-24 rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border-2 bg-white text-black" min="4" max="20" />
+            </div>
+            <div className="flex items-center">
+                <input id="requireUppercase" name="requireUppercase" type="checkbox" checked={policy.requireUppercase} onChange={handleInputChange} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <label htmlFor="requireUppercase" className="ml-3 block text-sm font-medium text-slate-700">Wajib Huruf Besar (A-Z)</label>
+            </div>
+            <div className="flex items-center">
+                <input id="requireNumber" name="requireNumber" type="checkbox" checked={policy.requireNumber} onChange={handleInputChange} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <label htmlFor="requireNumber" className="ml-3 block text-sm font-medium text-slate-700">Wajib Angka (0-9)</label>
+            </div>
+            <div className="flex items-center">
+                <input id="requireSpecialChar" name="requireSpecialChar" type="checkbox" checked={policy.requireSpecialChar} onChange={handleInputChange} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                <label htmlFor="requireSpecialChar" className="ml-3 block text-sm font-medium text-slate-700">Wajib Karakter Spesial (!@#$...)</label>
+            </div>
+            <p className="text-xs text-slate-500 italic">Catatan: Perubahan kebijakan ini hanya untuk tujuan demonstrasi dan tidak akan diterapkan pada form pendaftaran saat ini.</p>
+            <div className="flex items-center gap-4 pt-4">
+                <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-slate-400">
+                    {isSaving ? 'Menyimpan...' : 'Simpan Kebijakan'}
+                </button>
+                {feedback && (
+                    <div className={`flex items-center gap-2 text-sm font-semibold ${feedback.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                        {feedback.type === 'success' ? <CheckCircleIcon className="w-5 h-5" /> : <XCircleIcon className="w-5 h-5" />}
+                        <span>{feedback.message}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
 interface AdminPanelProps {
   user: User;
   onBack: () => void;
@@ -309,6 +393,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [newPasswordForReset, setNewPasswordForReset] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  // Add User Modal States
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPhone, setNewUserPhone] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserIsMember, setNewUserIsMember] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     setLoading(true);
@@ -623,6 +716,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
       }
   };
 
+  const handleAddNewUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsCreatingUser(true);
+    setModalFeedback(null);
+    try {
+        const { user, error } = await api.adminCreateUser({
+            fullName: newUserName,
+            phone: newUserPhone,
+            email: newUserEmail,
+            password_input: newUserPassword,
+            isMember: newUserIsMember
+        });
+        if (user) {
+            setModalFeedback({ type: 'success', message: 'Pengguna baru berhasil dibuat!' });
+            await fetchAllData();
+            setTimeout(() => {
+                setIsAddUserModalOpen(false);
+                // Reset form fields
+                setNewUserName('');
+                setNewUserEmail('');
+                setNewUserPhone('');
+                setNewUserPassword('');
+                setNewUserIsMember(false);
+            }, 1500);
+        } else {
+            throw new Error(error || 'Gagal membuat pengguna baru.');
+        }
+    } catch (err: any) {
+        setModalFeedback({ type: 'error', message: err.message });
+    } finally {
+        setIsCreatingUser(false);
+    }
+  };
+
   const handleExportUsers = () => {
     const header = ['ID (Email)', 'Nama Lengkap', 'No. HP', 'Tipe Akun', 'Progres (%)', 'Level Selesai', 'Member', 'Tanggal Daftar', 'Login Terakhir'];
     const totalLevels = levelData.length;
@@ -704,6 +831,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                       <div className="flex justify-end gap-2 pt-2">
                           <button type="button" onClick={() => setResettingPasswordForUser(null)} className="px-4 py-2 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition-colors">Batal</button>
                           <button type="submit" className="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition disabled:bg-sky-400" disabled={isResettingPassword || newPasswordForReset.length < 6}>{isResettingPassword ? 'Mereset...' : 'Reset Password'}</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
+
+      {isAddUserModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setIsAddUserModalOpen(false)}>
+              <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+                  <h3 className="text-lg font-bold mb-4 text-slate-800">Tambah Pengguna Baru</h3>
+                  <form onSubmit={handleAddNewUser} className="space-y-4">
+                      <div>
+                          <label htmlFor="newUserName" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><UserCircleIcon className="w-4 h-4"/>Nama Lengkap</label>
+                          <input id="newUserName" type="text" value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="John Doe" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" required disabled={isCreatingUser}/>
+                      </div>
+                      <div>
+                          <label htmlFor="newUserEmail" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><EnvelopeIcon className="w-4 h-4"/>Email</label>
+                          <input id="newUserEmail" type="email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} placeholder="user@example.com" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" required disabled={isCreatingUser}/>
+                      </div>
+                      <div>
+                          <label htmlFor="newUserPhone" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><PhoneIcon className="w-4 h-4"/>Nomor HP</label>
+                          <input id="newUserPhone" type="tel" value={newUserPhone} onChange={e => setNewUserPhone(e.target.value)} placeholder="08123..." className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" required disabled={isCreatingUser}/>
+                      </div>
+                      <div>
+                          <label htmlFor="newUserPassword" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5"><KeyIcon className="w-4 h-4"/>Password</label>
+                          <input id="newUserPassword" type="password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} placeholder="Minimal 6 karakter" className="w-full p-2 bg-white text-black border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" required disabled={isCreatingUser}/>
+                      </div>
+                      <div className="flex items-center pt-2">
+                        <input id="newUserIsMember" name="newUserIsMember" type="checkbox" checked={newUserIsMember} onChange={e => setNewUserIsMember(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                        <label htmlFor="newUserIsMember" className="ml-3 block text-sm font-medium text-slate-700">Jadikan Member Premium</label>
+                     </div>
+                      {modalFeedback && <div className={`p-2 rounded-md text-sm text-center ${modalFeedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{modalFeedback.message}</div>}
+                      <div className="flex justify-end gap-2 pt-2">
+                          <button type="button" onClick={() => setIsAddUserModalOpen(false)} className="px-4 py-2 bg-slate-200 text-slate-800 font-semibold rounded-lg hover:bg-slate-300 transition-colors">Batal</button>
+                          <button type="submit" className="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition disabled:bg-sky-400" disabled={isCreatingUser || newUserPassword.length < 6 || !newUserEmail || !newUserName}>{isCreatingUser ? 'Menyimpan...' : 'Simpan Pengguna'}</button>
                       </div>
                   </form>
               </div>
@@ -801,10 +963,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold text-slate-800">Manajemen Pengguna ({users.length})</h3>
-                            <button onClick={handleExportUsers} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
-                                <ArrowDownTrayIcon className="w-5 h-5"/>
-                                Ekspor CSV
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsAddUserModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white text-sm font-semibold rounded-md hover:bg-sky-700 transition-colors">
+                                    <UserPlusIcon className="w-5 h-5"/>
+                                    Tambah
+                                </button>
+                                <button onClick={handleExportUsers} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-md hover:bg-green-700 transition-colors">
+                                    <ArrowDownTrayIcon className="w-5 h-5"/>
+                                    Ekspor
+                                </button>
+                            </div>
                         </div>
                         {actionFeedback && (
                             <div className={`mb-4 p-2 rounded-md text-sm text-center ${actionFeedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{actionFeedback.message}</div>
@@ -929,6 +1097,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ user, onBack }) => {
                             <h3 className="text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><PaintBrushIcon className="w-6 h-6"/>Kustomisasi Sertifikat</h3>
                             <p className="text-sm text-slate-500 mb-4">Ubah tampilan sertifikat yang diterima oleh pengguna.</p>
                             <CertificateSettingsEditor />
+                        </div>
+                        <div className="border-t pt-8">
+                            <h3 className="text-xl font-bold text-slate-800 mb-1 flex items-center gap-2"><ShieldCheckIcon className="w-6 h-6"/>Kebijakan Password</h3>
+                            <p className="text-sm text-slate-500 mb-4">Atur kebijakan password untuk pendaftaran pengguna baru.</p>
+                            <PasswordPolicyEditor />
                         </div>
                         {user.type === 'password' && (
                             <div className="border-t pt-8">

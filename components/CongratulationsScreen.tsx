@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Mascot } from './Mascot';
 import { MascotState } from '../types';
 import { ArrowRightIcon, StarIcon, TrophyIcon } from '@heroicons/react/24/solid';
@@ -52,9 +52,16 @@ const partMessages: Record<number, { title: string; message: string }> = {
   },
 };
 
+const CONGRATS_SOUND_PATH = 'music/congrat.wav';
+
 export const CongratulationsScreen: React.FC<CongratulationsScreenProps> = ({ part, onContinue }) => {
   const { title, message } = partMessages[part] || partMessages[10];
   const isFinalPart = part === 10;
+
+  useEffect(() => {
+    const audio = new Audio(CONGRATS_SOUND_PATH);
+    audio.play().catch(error => console.error("Error playing congratulation sound:", error));
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">

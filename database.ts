@@ -1,11 +1,11 @@
-
 import { levelData } from './constants';
-import type { LevelCompletionStatus, User, CertificateRecord, CertificateSettings } from './types';
+import type { LevelCompletionStatus, User, CertificateRecord, CertificateSettings, PasswordPolicy } from './types';
 
 interface Database {
   users: Record<string, User>;
   certificates: Record<string, CertificateRecord>;
   certificateSettings: CertificateSettings;
+  passwordPolicy: PasswordPolicy;
 }
 
 const DB_KEY = 'excelSagaDatabase';
@@ -27,6 +27,14 @@ const getDefaultCertificateSettings = (): CertificateSettings => ({
     signerTitle: "Guild Formula Frontier",
 });
 
+const getDefaultPasswordPolicy = (): PasswordPolicy => ({
+    minLength: 6,
+    requireUppercase: false,
+    requireNumber: false,
+    requireSpecialChar: false,
+});
+
+
 // Initialize DB from localStorage or with a default
 const loadDb = (): Database => {
   try {
@@ -39,6 +47,9 @@ const loadDb = (): Database => {
         }
         if (!parsed.certificateSettings) {
             parsed.certificateSettings = getDefaultCertificateSettings();
+        }
+        if (!parsed.passwordPolicy) {
+            parsed.passwordPolicy = getDefaultPasswordPolicy();
         }
         return parsed;
       }
@@ -69,6 +80,7 @@ const loadDb = (): Database => {
     },
     certificates: {},
     certificateSettings: getDefaultCertificateSettings(),
+    passwordPolicy: getDefaultPasswordPolicy(),
   };
 };
 
