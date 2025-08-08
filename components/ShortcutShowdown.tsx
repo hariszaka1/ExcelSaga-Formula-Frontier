@@ -10,6 +10,21 @@ const gameData = [
   { shortcut: 'CTRL + Z', description: 'Membatalkan aksi terakhir (Undo)', options: ['Redo', 'Find', 'Replace'] },
   { shortcut: 'CTRL + S', description: 'Menyimpan workbook', options: ['Save As', 'Open', 'Close'] },
   { shortcut: 'CTRL + F', description: 'Membuka dialog Find', options: ['Go To', 'Replace', 'Sort'] },
+  { shortcut: 'CTRL + X', description: 'Memotong sel yang dipilih (Cut)', options: ['Copy', 'Delete', 'Find'] },
+  { shortcut: 'CTRL + I', description: 'Membuat teks miring (Italic)', options: ['Bold', 'Underline', 'Highlight'] },
+  { shortcut: 'CTRL + U', description: 'Memberi garis bawah pada teks (Underline)', options: ['Strikethrough', 'Bold', 'Italic'] },
+  { shortcut: 'CTRL + A', description: 'Memilih semua sel di worksheet (Select All)', options: ['Select Row', 'Select Column', 'Select Table'] },
+  { shortcut: 'CTRL + P', description: 'Membuka dialog Print', options: ['Paste', 'Page Layout', 'Protect Sheet'] },
+  { shortcut: 'CTRL + Y', description: 'Mengulangi aksi terakhir (Redo)', options: ['Undo', 'Repeat Typing', 'Refresh'] },
+  { shortcut: 'CTRL + H', description: 'Membuka dialog Find and Replace', options: ['Find', 'Go To', 'Insert Hyperlink'] },
+  { shortcut: 'F5', description: 'Membuka dialog Go To', options: ['Find', 'Refresh', 'Format Cells'] },
+  { shortcut: 'CTRL + K', description: 'Menyisipkan Hyperlink', options: ['Insert Comment', 'Insert Chart', 'Copy Link'] },
+  { shortcut: 'CTRL + ;', description: 'Menyisipkan tanggal hari ini', options: ['Insert Time', 'Format as Date', 'Open Calendar'] },
+  { shortcut: 'ALT + =', description: 'Menyisipkan formula AutoSum', options: ['Calculate Average', 'Count Cells', 'Start a Formula'] },
+  { shortcut: 'CTRL + SHIFT + L', description: 'Mengaktifkan atau menonaktifkan Filter', options: ['Sort A-Z', 'Create Table', 'Advanced Filter'] },
+  { shortcut: 'F12', description: 'Membuka dialog Save As', options: ['Save', 'Close', 'Open'] },
+  { shortcut: 'CTRL + D', description: 'Mengisi sel ke bawah (Fill Down)', options: ['Delete Row', 'Duplicate Sheet', 'Fill Right'] },
+  { shortcut: 'SHIFT + F11', description: 'Menyisipkan worksheet baru', options: ['Rename Sheet', 'Delete Sheet', 'Copy Sheet'] },
 ];
 
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);

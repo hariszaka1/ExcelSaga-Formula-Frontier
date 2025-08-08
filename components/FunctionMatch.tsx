@@ -10,7 +10,19 @@ const functionPairs = [
   { func: 'COUNTIF', desc: 'Menghitung jumlah sel dalam rentang yang memenuhi satu kriteria.' },
   { func: 'TEXTJOIN', desc: 'Menggabungkan teks dari beberapa rentang dan/atau string, dengan menyertakan pemisah.' },
   { func: 'FILTER', desc: 'Menyaring rentang data berdasarkan kriteria yang Anda tentukan.' },
+  { func: 'SUM', desc: 'Menjumlahkan semua angka dalam rentang sel.' },
+  { func: 'AVERAGE', desc: 'Menghitung rata-rata dari sekelompok angka.' },
+  { func: 'MAX', desc: 'Mengembalikan nilai terbesar dalam sekumpulan nilai.' },
+  { func: 'IF', desc: 'Memeriksa apakah suatu kondisi terpenuhi, dan mengembalikan satu nilai jika BENAR, dan nilai lain jika SALAH.' },
+  { func: 'CONCAT', desc: 'Menggabungkan teks dari beberapa rentang dan/atau string (tanpa pemisah).' },
+  { func: 'TRIM', desc: 'Menghapus spasi ekstra dari teks.' },
+  { func: 'TODAY', desc: 'Mengembalikan tanggal serial hari ini.' },
+  { func: 'XLOOKUP', desc: 'Fungsi pencarian modern yang dapat mencari ke segala arah.' },
+  { func: 'AND', desc: 'Mengembalikan TRUE jika semua argumennya bernilai TRUE.' },
+  { func: 'LEFT', desc: 'Mengembalikan karakter pertama atau beberapa karakter pertama dalam string teks.' },
 ];
+
+const PAIRS_PER_GAME = 8;
 
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
 
@@ -21,11 +33,13 @@ export const FunctionMatch: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [feedback, setFeedback] = useState<{ func: string; correct: boolean } | null>(null);
   const matchedCount = useMemo(() => functions.filter(f => f.matched).length, [functions]);
   
-  const isGameWon = matchedCount === functionPairs.length;
+  const isGameWon = useMemo(() => functions.length > 0 && matchedCount === functions.length, [matchedCount, functions.length]);
 
   const setupGame = useCallback(() => {
-    const shuffledFuncs = shuffleArray(functionPairs);
-    const shuffledDescs = shuffleArray(functionPairs);
+    const gameSubset = shuffleArray(functionPairs).slice(0, PAIRS_PER_GAME);
+    const shuffledFuncs = shuffleArray(gameSubset);
+    const shuffledDescs = shuffleArray(gameSubset);
+    
     setFunctions(shuffledFuncs.map(f => ({ func: f.func, matched: false })));
     setDescriptions(shuffledDescs.map(d => ({ desc: d.desc, matched: false, originalFunc: d.func })));
     setSelectedFunc(null);
@@ -108,7 +122,7 @@ export const FunctionMatch: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <h3 className="font-bold text-lg text-center text-slate-700">Deskripsi</h3>
             {descriptions.map(({ desc, matched, originalFunc }) => (
               <button
-                key={originalFunc}
+                key={originalFunc + desc.substring(0, 5)}
                 onClick={() => !matched && handleDescClick(originalFunc)}
                 disabled={matched || !selectedFunc}
                 className={`w-full p-3 rounded-lg border border-slate-200 text-left text-sm transition-all duration-200 h-full ${

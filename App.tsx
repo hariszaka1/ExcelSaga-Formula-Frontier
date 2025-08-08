@@ -20,6 +20,21 @@ import { FillHandleFrenzy } from './components/FillHandleFrenzy';
 import { ConditionalClues } from './components/ConditionalClues';
 import { WhatsTheFunction } from './components/WhatsTheFunction';
 import { CertificateScreen } from './components/CertificateScreen';
+import { VlookupVenture } from './components/VlookupVenture';
+import { DataValidationDash } from './components/DataValidationDash';
+import { FreezePanesPuzzle } from './components/FreezePanesPuzzle';
+import { SortFilterSprint } from './components/SortFilterSprint';
+import { TextSplitter } from './components/TextSplitter';
+import { GoalSeekGuru } from './components/GoalSeekGuru';
+import { KeyboardNinja } from './components/KeyboardNinja';
+import { ChartElementId } from './components/ChartElementId';
+import { ConditionalLogic } from './components/ConditionalLogic';
+import { DynamicArrayDrill } from './components/DynamicArrayDrill';
+import { WhatIfWizard } from './components/WhatIfWizard';
+import { PasteSpecialPro } from './components/PasteSpecialPro';
+import { NamedRangeRanger } from './components/NamedRangeRanger';
+import { AbsoluteRelativeRace } from './components/AbsoluteRelativeRace';
+import { SparklineSpeedster } from './components/SparklineSpeedster';
 import { levelData } from './constants';
 import type { LevelCompletionStatus, PartNumber, User } from './types';
 import { GameState } from './types';
@@ -27,9 +42,9 @@ import { SpeakerWaveIcon, SpeakerXMarkIcon, ArrowRightOnRectangleIcon, WrenchScr
 import { api } from './api';
 
 const musicTracks = {
-  menu: '../music/menu.wav',
-  game: '../music/in-game.wav',
-  congrats: '../music/congrat.wav',
+  menu: 'music/menu.wav',
+  game: 'music/in-game.wav',
+  congrats: 'music/congrat.wav',
 };
 
 interface SessionState {
@@ -136,6 +151,21 @@ const App: React.FC = () => {
         case GameState.FillHandleFrenzy:
         case GameState.ConditionalClues:
         case GameState.WhatsTheFunction:
+        case GameState.VlookupVenture:
+        case GameState.DataValidationDash:
+        case GameState.FreezePanesPuzzle:
+        case GameState.SortFilterSprint:
+        case GameState.TextSplitter:
+        case GameState.GoalSeekGuru:
+        case GameState.KeyboardNinja:
+        case GameState.ChartElementId:
+        case GameState.ConditionalLogic:
+        case GameState.DynamicArrayDrill:
+        case GameState.WhatIfWizard:
+        case GameState.PasteSpecialPro:
+        case GameState.NamedRangeRanger:
+        case GameState.AbsoluteRelativeRace:
+        case GameState.SparklineSpeedster:
         default:
             targetTrack = musicTracks.menu;
             break;
@@ -272,7 +302,7 @@ const App: React.FC = () => {
       setGameState(GameState.MiniGameArcade);
   }, []);
 
-  const handleStartMiniGame = (game: 'FormulaRacer' | 'CellFinder' | 'FunctionMatch' | 'ChartChamp' | 'ShortcutShowdown' | 'ErrorExterminator' | 'PivotPro' | 'FillHandleFrenzy' | 'ConditionalClues' | 'WhatsTheFunction') => {
+  const handleStartMiniGame = (game: 'FormulaRacer' | 'CellFinder' | 'FunctionMatch' | 'ChartChamp' | 'ShortcutShowdown' | 'ErrorExterminator' | 'PivotPro' | 'FillHandleFrenzy' | 'ConditionalClues' | 'WhatsTheFunction' | 'VlookupVenture' | 'DataValidationDash' | 'FreezePanesPuzzle' | 'SortFilterSprint' | 'TextSplitter' | 'GoalSeekGuru' | 'KeyboardNinja' | 'ChartElementId' | 'ConditionalLogic' | 'DynamicArrayDrill' | 'WhatIfWizard' | 'PasteSpecialPro' | 'NamedRangeRanger' | 'AbsoluteRelativeRace' | 'SparklineSpeedster') => {
       switch(game) {
           case 'FormulaRacer': setGameState(GameState.FormulaRacer); break;
           case 'CellFinder': setGameState(GameState.CellFinder); break;
@@ -284,6 +314,21 @@ const App: React.FC = () => {
           case 'FillHandleFrenzy': setGameState(GameState.FillHandleFrenzy); break;
           case 'ConditionalClues': setGameState(GameState.ConditionalClues); break;
           case 'WhatsTheFunction': setGameState(GameState.WhatsTheFunction); break;
+          case 'VlookupVenture': setGameState(GameState.VlookupVenture); break;
+          case 'DataValidationDash': setGameState(GameState.DataValidationDash); break;
+          case 'FreezePanesPuzzle': setGameState(GameState.FreezePanesPuzzle); break;
+          case 'SortFilterSprint': setGameState(GameState.SortFilterSprint); break;
+          case 'TextSplitter': setGameState(GameState.TextSplitter); break;
+          case 'GoalSeekGuru': setGameState(GameState.GoalSeekGuru); break;
+          case 'KeyboardNinja': setGameState(GameState.KeyboardNinja); break;
+          case 'ChartElementId': setGameState(GameState.ChartElementId); break;
+          case 'ConditionalLogic': setGameState(GameState.ConditionalLogic); break;
+          case 'DynamicArrayDrill': setGameState(GameState.DynamicArrayDrill); break;
+          case 'WhatIfWizard': setGameState(GameState.WhatIfWizard); break;
+          case 'PasteSpecialPro': setGameState(GameState.PasteSpecialPro); break;
+          case 'NamedRangeRanger': setGameState(GameState.NamedRangeRanger); break;
+          case 'AbsoluteRelativeRace': setGameState(GameState.AbsoluteRelativeRace); break;
+          case 'SparklineSpeedster': setGameState(GameState.SparklineSpeedster); break;
       }
   };
 
@@ -416,45 +461,31 @@ const App: React.FC = () => {
                 />
             )}
 
-            {gameState === GameState.FormulaRacer && (
-                <FormulaRacer onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.CellFinder && (
-                <CellFinder onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.FunctionMatch && (
-                <FunctionMatch onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.ChartChamp && (
-                <ChartChamp onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-            
-            {gameState === GameState.ShortcutShowdown && (
-                <ShortcutShowdown onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.ErrorExterminator && (
-                <ErrorExterminator onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-            
-            {gameState === GameState.PivotPro && (
-                <PivotPro onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.FillHandleFrenzy && (
-                <FillHandleFrenzy onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-            
-            {gameState === GameState.ConditionalClues && (
-                <ConditionalClues onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
-
-            {gameState === GameState.WhatsTheFunction && (
-                <WhatsTheFunction onBack={() => setGameState(GameState.MiniGameArcade)} />
-            )}
+            {gameState === GameState.FormulaRacer && <FormulaRacer onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.CellFinder && <CellFinder onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.FunctionMatch && <FunctionMatch onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ChartChamp && <ChartChamp onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ShortcutShowdown && <ShortcutShowdown onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ErrorExterminator && <ErrorExterminator onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.PivotPro && <PivotPro onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.FillHandleFrenzy && <FillHandleFrenzy onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ConditionalClues && <ConditionalClues onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.WhatsTheFunction && <WhatsTheFunction onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.VlookupVenture && <VlookupVenture onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.DataValidationDash && <DataValidationDash onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.FreezePanesPuzzle && <FreezePanesPuzzle onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.SortFilterSprint && <SortFilterSprint onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.TextSplitter && <TextSplitter onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.GoalSeekGuru && <GoalSeekGuru onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.KeyboardNinja && <KeyboardNinja onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ChartElementId && <ChartElementId onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.ConditionalLogic && <ConditionalLogic onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.DynamicArrayDrill && <DynamicArrayDrill onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.WhatIfWizard && <WhatIfWizard onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.PasteSpecialPro && <PasteSpecialPro onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.NamedRangeRanger && <NamedRangeRanger onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.AbsoluteRelativeRace && <AbsoluteRelativeRace onBack={() => setGameState(GameState.MiniGameArcade)} />}
+            {gameState === GameState.SparklineSpeedster && <SparklineSpeedster onBack={() => setGameState(GameState.MiniGameArcade)} />}
 
             </div>
         </>

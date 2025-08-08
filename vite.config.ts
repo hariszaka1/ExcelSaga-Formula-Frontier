@@ -1,17 +1,18 @@
-import path from 'path';
+// vite.config.ts
 import { defineConfig, loadEnv } from 'vite';
+import path from 'path';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/ExcelSaga-Formula-Frontier/', // Ganti sesuai nama repo GitHub kamu
+    base: '/ExcelSaga-Formula-Frontier/',
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, '.')
       }
     }
   };

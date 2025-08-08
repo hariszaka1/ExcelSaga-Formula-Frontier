@@ -1,3 +1,4 @@
+
 import type { ComponentType } from 'react';
 
 export interface Answer {
@@ -46,6 +47,21 @@ export enum GameState {
   ConditionalClues,
   WhatsTheFunction,
   Certificate,
+  VlookupVenture,
+  DataValidationDash,
+  FreezePanesPuzzle,
+  SortFilterSprint,
+  TextSplitter,
+  GoalSeekGuru,
+  KeyboardNinja,
+  ChartElementId,
+  ConditionalLogic,
+  DynamicArrayDrill,
+  WhatIfWizard,
+  PasteSpecialPro,
+  NamedRangeRanger,
+  AbsoluteRelativeRace,
+  SparklineSpeedster,
 }
 
 export enum MascotState {

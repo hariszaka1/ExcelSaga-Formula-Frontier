@@ -56,6 +56,12 @@ export const levelData: Level[] = [
           correctValue: ['=VLOOKUP("Mangga";B2:C4;2;FALSE)', '=VLOOKUP("Mangga";B:C;2;FALSE)', '=VLOOKUP("Mangga";B2:C4;2;0)', '=VLOOKUP("Mangga";B:C;2;0)'],
         },
       },
+      {
+        challenge: 'Jika Anda mengetik "Senin" di sebuah sel dan menarik fill handle ke bawah, apa nilai yang akan muncul di sel berikutnya?',
+        hint: 'Excel mengenali nama-nama hari dalam seminggu.',
+        explanation: 'Excel memiliki daftar kustom bawaan, termasuk nama hari. Saat Anda menarik fill handle dari "Senin", Excel secara otomatis akan melanjutkannya ke hari berikutnya, yaitu "Selasa".',
+        answer: { type: 'text', correctValue: 'Selasa' },
+      },
     ],
   },
   {
@@ -128,6 +134,12 @@ export const levelData: Level[] = [
         explanation: 'Untuk kriteria "tidak sama dengan", Anda menggunakan operator `<>` di dalam string kriteria. Formulanya adalah `=COUNTIF(B2:B6;"<>C")`. Kriteria ` "<>C" ` memerintahkan Excel untuk menghitung semua sel dalam rentang `B2:B6` yang isinya **BUKAN** "C". Ini adalah trik yang sangat berguna untuk mengecualikan nilai tertentu dari hitungan.',
         answer: { type: 'formula', correctValue: ['=COUNTIF(B2:B6;"<>C")', '=COUNTIF(B:B;"<>C")'] },
       },
+      {
+        challenge: 'Fungsi apa yang digunakan untuk menjumlahkan semua angka dalam rentang sel?',
+        hint: 'Ini adalah salah satu fungsi matematika paling dasar di Excel, namanya sangat singkat.',
+        explanation: 'Fungsi SUM adalah fungsi fundamental yang digunakan untuk menjumlahkan nilai dalam sel, rentang sel, atau kombinasi keduanya. Contoh: =SUM(A1:A10).',
+        answer: { type: 'text', correctValue: 'SUM' },
+      },
     ],
   },
   {
@@ -184,6 +196,12 @@ export const levelData: Level[] = [
         hint: 'Kode format untuk tahun 4 digit adalah `"yyyy"`. Untuk 2 digit, gunakan `"yy"`.',
         explanation: 'Untuk mendapatkan tahun 4 digit sebagai teks, gunakan kode format `"yyyy"`. Formulanya adalah `=TEXT(A2;"yyyy")`. Ini penting untuk dibedakan dari fungsi `YEAR(A2)`. Keduanya memang mengambil tahun, tetapi `YEAR(A2)` mengembalikan hasil berupa **angka** (2025), sedangkan `TEXT(A2;"yyyy")` mengembalikan hasil berupa **teks** ("2025").',
         answer: { type: 'formula', correctValue: '=TEXT(A2;"yyyy")' },
+      },
+      {
+        challenge: 'Apa fungsi dari shortcut keyboard CTRL + B?',
+        hint: 'Shortcut ini berhubungan dengan pemformatan teks dasar.',
+        explanation: 'CTRL + B digunakan untuk membuat teks yang dipilih menjadi tebal (Bold). Ini adalah cara cepat untuk menekankan teks tanpa menggunakan mouse.',
+        answer: { type: 'dropdown', options: ['Membuat teks miring (Italic)', 'Menyalin (Copy)', 'Membuat teks menjadi tebal (Bold)', 'Menempelkan (Paste)'], correctValue: 'Membuat teks menjadi tebal (Bold)' },
       },
     ],
   },
@@ -350,7 +368,13 @@ export const levelData: Level[] = [
             hint: 'Jika formula di dalam IFERROR tidak menghasilkan error, maka hasil dari formula itu sendiri yang akan ditampilkan.',
             explanation: 'Ini menunjukkan apa yang terjadi ketika tidak ada error. Formula `=IFERROR(VLOOKUP("Apel";A2:B4;2;FALSE);"Produk tidak ada")` akan dicoba oleh Excel. Kali ini, `VLOOKUP` berhasil menemukan "Apel" dan mengembalikan 15000. Karena tidak ada error yang terjadi, fungsi IFERROR tidak melakukan apa-apa dan hanya meneruskan hasil yang sukses tersebut. Jadi, hasilnya adalah 15000.',
             answer: { type: 'formula', correctValue: '=IFERROR(VLOOKUP("Apel";A2:B4;2;FALSE);"Produk tidak ada")' },
-        }
+        },
+        {
+          challenge: 'Formula `=10/0` akan menghasilkan error. Apa jenis error tersebut?',
+          hint: 'Error ini terjadi saat ada operasi pembagian yang tidak valid.',
+          explanation: 'Error #DIV/0! terjadi ketika sebuah formula mencoba membagi sebuah angka dengan nol (0) atau dengan sel kosong, yang merupakan operasi matematika yang tidak terdefinisi.',
+          answer: { type: 'dropdown', options: ['#N/A', '#DIV/0!', '#NAME?', '#VALUE!'], correctValue: '#DIV/0!' },
+        },
     ]
   },
     {
@@ -419,7 +443,13 @@ export const levelData: Level[] = [
             hint: 'Gunakan `RIGHT(teks, jumlah_karakter)`. Anda perlu 2 karakter dari kanan.',
             explanation: 'Fungsi **RIGHT** adalah kebalikan dari LEFT; ia mengambil sejumlah karakter dari akhir (kanan) sebuah string. Formula `=RIGHT(A2;2)` secara sederhana berarti "ambil 2 karakter dari sisi kanan sel A2", yang akan menghasilkan "ID".',
             answer: { type: 'formula', correctValue: '=RIGHT(A2;2)' },
-        }
+        },
+        {
+          challenge: 'Fungsi apa yang digunakan untuk mencari item di dalam satu baris atau kolom, dan mengembalikan posisi relatif item tersebut?',
+          hint: 'Fungsi ini sering dipasangkan dengan INDEX untuk melakukan pencarian yang lebih fleksibel daripada VLOOKUP.',
+          explanation: 'Fungsi MATCH sangat berguna untuk menemukan posisi (nomor baris atau kolom) dari sebuah item dalam rentang. Hasilnya yang berupa angka kemudian dapat digunakan oleh fungsi lain seperti INDEX.',
+          answer: { type: 'text', correctValue: 'MATCH' },
+        },
     ]
   },
   {
@@ -455,6 +485,12 @@ export const levelData: Level[] = [
             hint: 'Fungsi ini memungkinkan Anda menentukan rentang berdasarkan titik awal, pergeseran baris & kolom, serta tinggi & lebar rentang.',
             explanation: 'Fungsi **OFFSET** adalah fondasi klasik untuk membuat referensi rentang yang dinamis. Dengan mengkombinasikannya dengan fungsi `COUNTA` (untuk menghitung jumlah data yang ada), Anda bisa membuat *Named Range* yang secara otomatis memperbarui ukurannya setiap kali data baru ditambahkan. Grafik yang menggunakan *Named Range* ini kemudian akan ikut ter-update secara otomatis. Penting diketahui, OFFSET adalah fungsi *volatile* (selalu dihitung ulang saat ada perubahan di worksheet), jadi untuk workbook yang sangat besar, alternatif menggunakan fungsi **INDEX** seringkali lebih disukai karena tidak volatile.',
             answer: { type: 'text', correctValue: ['OFFSET', 'INDEX'] },
+        },
+        {
+          challenge: 'Tipe grafik apa yang paling cocok untuk menampilkan tren penjualan selama 12 bulan?',
+          hint: 'Grafik ini sangat baik untuk menunjukkan data berkelanjutan dari waktu ke waktu.',
+          explanation: 'Line Chart (Grafik Garis) adalah pilihan ideal untuk melacak perubahan atau tren dari waktu ke waktu. Setiap titik pada garis mewakili nilai pada titik waktu tertentu, memudahkan untuk melihat naik turunnya data.',
+          answer: { type: 'dropdown', options: ['Bar Chart', 'Line Chart', 'Pie Chart', 'Scatter Plot'], correctValue: 'Line Chart' },
         },
     ]
   },
@@ -567,7 +603,13 @@ export const levelData: Level[] = [
             hint: 'Ubah `return_array` menjadi kolom Penjualan. `lookup_array` tetap kolom Produk.',
             explanation: 'Sangat mudah untuk mengubah kolom hasil dengan XLOOKUP. Kita hanya perlu mengubah argumen ketiga. Formulanya adalah `=XLOOKUP("Keyboard";B2:B5;C2:C5)`. Argumen pertama dan kedua (`lookup_value` dan `lookup_array`) tetap sama karena kita masih mencari "Keyboard" di kolom Produk. Yang berubah hanyalah kolom `return_array` yang sekarang adalah `C2:C5` (kolom Penjualan).',
             answer: { type: 'formula', correctValue: ['=XLOOKUP("Keyboard";B2:B5;C2:C5)', '=XLOOKUP("Keyboard";B:B;C:C)'] },
-        }
+        },
+        {
+          challenge: 'Fungsi apa yang digunakan untuk menyaring rentang data berdasarkan kriteria yang Anda tentukan?',
+          hint: 'Ini adalah fungsi array dinamis yang modern, yang dapat "menumpahkan" hasilnya ke beberapa sel.',
+          explanation: 'Fungsi FILTER adalah fungsi array dinamis yang kuat. Ia mengembalikan semua baris dari rentang yang memenuhi kriteria yang Anda berikan, secara otomatis membuat tabel hasil baru.',
+          answer: { type: 'text', correctValue: 'FILTER' },
+        },
     ]
   },
     {
@@ -609,7 +651,13 @@ export const levelData: Level[] = [
             hint: 'Gunakan fungsi `IS...` yang memeriksa tipe data. Fungsi `ISNUMBER` akan sangat membantu.',
             explanation: 'Fungsi `ISNUMBER` adalah salah satu dari keluarga fungsi "IS" yang memeriksa tipe data. Ia akan mengembalikan `TRUE` jika isi sel adalah angka, dan `FALSE` jika bukan (misalnya jika berisi teks, error, atau boolean). Dengan menggunakannya sebagai formula Validasi Data, `=ISNUMBER(A2)`, Anda memastikan hanya entri numerik yang akan diterima oleh sel tersebut, mencegah kesalahan input data.',
             answer: { type: 'formula', correctValue: '=ISNUMBER(A2)' },
-        }
+        },
+        {
+          challenge: 'Formula yang merujuk ke nama yang tidak ada (misal: `=TotalPenjualan`) akan menghasilkan error. Apa jenis errornya?',
+          hint: 'Error ini terjadi ketika Excel tidak mengenali nama fungsi atau named range.',
+          explanation: 'Error #NAME? muncul ketika Excel tidak dapat mengenali teks dalam sebuah formula. Ini biasanya terjadi karena salah ketik nama fungsi (misal, `VLOKUP` bukan `VLOOKUP`) atau merujuk ke Named Range yang belum dibuat.',
+          answer: { type: 'dropdown', options: ['#REF!', '#VALUE!', '#NAME?', '#NUM!'], correctValue: '#NAME?' },
+        },
     ]
   },
     {
