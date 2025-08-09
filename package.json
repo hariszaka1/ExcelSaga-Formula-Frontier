@@ -1,12 +1,16 @@
 {
-  "name": "excel-saga:-formula-frontier-by-tanyajawabexcel",
+  "name": "excel-saga-formula-frontier-by-tanyajawabexcel",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://hariszaka1.github.io/ExcelSaga-Formula-Frontier",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rm -rf dist",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@google/genai": "^1.13.0",
