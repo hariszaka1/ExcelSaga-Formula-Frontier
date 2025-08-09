@@ -45,6 +45,7 @@ export const api = {
           fullName,
           phone,
           progress: getDefaultCompletionStatus(),
+          championshipsCompleted: {},
           isAdmin: false,
           isMember: false,
           createdAt: Date.now(),
@@ -79,6 +80,7 @@ export const api = {
                 fullName,
                 phone,
                 progress: getDefaultCompletionStatus(),
+                championshipsCompleted: {},
                 isAdmin: false,
                 isMember: isMember,
                 createdAt: Date.now(),
@@ -109,6 +111,7 @@ export const api = {
                     type: 'google',
                     password: password_input,
                     progress: getDefaultCompletionStatus(),
+                    championshipsCompleted: {},
                     fullName: email.split('@')[0],
                     isMember: false,
                     createdAt: Date.now(),
@@ -117,6 +120,9 @@ export const api = {
             } else {
                 // Existing Google user, now setting a password
                 user.password = password_input;
+                 if (!user.championshipsCompleted) { 
+                    user.championshipsCompleted = {};
+                }
             }
             
             user.lastLoginAt = Date.now();
@@ -154,6 +160,24 @@ export const api = {
               const user = db.users[userId];
               if(user) {
                   user.progress = progress;
+                  saveDb();
+                  resolve({ success: true });
+              } else {
+                  resolve({ success: false });
+              }
+          }, NETWORK_DELAY);
+      });
+  },
+
+  saveChampionshipProgress: (userId: string, caseId: number): Promise<{ success: boolean }> => {
+      return new Promise((resolve) => {
+          setTimeout(() => {
+              const user = db.users[userId];
+              if(user) {
+                  if (!user.championshipsCompleted) {
+                      user.championshipsCompleted = {};
+                  }
+                  user.championshipsCompleted[caseId] = true;
                   saveDb();
                   resolve({ success: true });
               } else {

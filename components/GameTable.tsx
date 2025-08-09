@@ -1,5 +1,6 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { SettingsContext } from '../App';
+import type { AppSettings } from '../types';
 
 interface TableData {
     headers: string[];
@@ -11,8 +12,28 @@ interface GameTableProps {
     onRangeSelect: (range: string) => void;
 }
 
+const formatNumber = (value: string | number, settings: AppSettings): string => {
+    if (typeof value !== 'number') {
+        return String(value);
+    }
 
-const toColName = (col: number): string => {
+    const { numberFormat } = settings;
+    const thousandsSeparator = numberFormat === 'us' ? ',' : '.';
+    const decimalSeparator = numberFormat === 'us' ? '.' : ',';
+
+    const parts = value.toString().split('.');
+    let integerPart = parts[0];
+    const decimalPart = parts[1];
+
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator);
+
+    return decimalPart ? `${integerPart}${decimalSeparator}${decimalPart}` : integerPart;
+};
+
+const toColName = (col: number, settings: AppSettings): string => {
+    if (settings.referenceStyle === 'R1C1') {
+        return String(col + 1);
+    }
     let s = '', t;
     while (col >= 0) {
       t = col % 26;
@@ -22,7 +43,7 @@ const toColName = (col: number): string => {
     return s;
 };
 
-const toA1 = (row: number, col: number): string => `${toColName(col)}${row}`;
+const toA1 = (row: number, col: number): string => `${toColName(col, { referenceStyle: 'A1' } as AppSettings)}${row}`;
 
 const isCellInRange = (
     cellRow: number,
@@ -40,6 +61,7 @@ const isCellInRange = (
 
 
 export const GameTable: React.FC<GameTableProps> = ({ table, onRangeSelect }) => {
+    const { settings } = useContext(SettingsContext);
     const [isDragging, setIsDragging] = useState(false);
     const [selection, setSelection] = useState<{
         start: { row: number; col: number } | null;
@@ -58,8 +80,12 @@ export const GameTable: React.FC<GameTableProps> = ({ table, onRangeSelect }) =>
         const minCol = Math.min(start.col, end.col);
         const maxCol = Math.max(start.col, end.col);
         
+        // Always use A1 for formula input, regardless of display setting
+        const a1ColMin = toColName(minCol, { referenceStyle: 'A1' } as AppSettings);
+        const a1ColMax = toColName(maxCol, { referenceStyle: 'A1' } as AppSettings);
+
         if (type === 'row') return `${minRow}:${maxRow}`;
-        if (type === 'col') return `${toColName(minCol)}:${toColName(maxCol)}`;
+        if (type === 'col') return `${a1ColMin}:${a1ColMax}`;
 
         const startA1 = toA1(minRow, minCol);
         const endA1 = toA1(maxRow, maxCol);
@@ -153,7 +179,7 @@ export const GameTable: React.FC<GameTableProps> = ({ table, onRangeSelect }) =>
                                     onMouseOver={() => handleMouseOver(1, colIndex)}
                                     className={`px-4 py-2 border border-slate-300 text-center font-semibold text-slate-500 bg-slate-200 sticky top-0 z-10 min-w-[100px] cursor-pointer transition-colors ${isSelected ? 'bg-green-200' : 'hover:bg-slate-300'}`}
                                 >
-                                    {String.fromCharCode(65 + colIndex)}
+                                    {toColName(colIndex, settings)}
                                 </th>
                             )
                         })}
@@ -205,7 +231,7 @@ export const GameTable: React.FC<GameTableProps> = ({ table, onRangeSelect }) =>
                                             onMouseOver={() => handleMouseOver(actualRowIndex, cellIndex)}
                                             className={`relative px-4 py-3 border border-slate-200 cursor-pointer transition-colors ${isSelected ? 'bg-green-100/50' : ''} ${isActive && !isDragging ? 'ring-2 ring-inset ring-green-500 z-10' : ''}`}
                                         >
-                                            {cell}
+                                            {formatNumber(cell, settings)}
                                             {isActive && !isDragging && (
                                                 <div className="absolute -right-[2px] -bottom-[2px] w-1.5 h-1.5 bg-green-500 border-2 border-white cursor-nwse-resize"></div>
                                             )}

@@ -20,6 +20,42 @@ const scenarios = [
     },
     task: 'Buat ringkasan sederhana yang menjumlahkan total Profit untuk setiap Kategori (baris).',
   },
+  {
+    fields: ['Sales Person', 'Kuartal', 'Unit Terjual'],
+    solution: {
+      rows: ['Sales Person'],
+      columns: [],
+      values: ['Unit Terjual'],
+    },
+    task: 'Buat ringkasan jumlah Unit Terjual untuk setiap Sales Person.',
+  },
+  {
+    fields: ['Produk', 'Bulan', 'Pendapatan'],
+    solution: {
+      rows: ['Produk'],
+      columns: ['Bulan'],
+      values: ['Pendapatan'],
+    },
+    task: 'Buat laporan yang menunjukkan total Pendapatan untuk setiap Bulan (kolom) per Produk (baris).',
+  },
+  {
+    fields: ['Status Proyek', 'Departemen', 'Biaya'],
+    solution: {
+      rows: [],
+      columns: ['Status Proyek'],
+      values: ['Biaya'],
+    },
+    task: 'Buat laporan kolom yang menunjukkan total Biaya untuk setiap Status Proyek.',
+  },
+  {
+    fields: ['Negara', 'Tahun', 'Populasi'],
+    solution: {
+      rows: ['Negara'],
+      columns: ['Tahun'],
+      values: ['Populasi'],
+    },
+    task: 'Tampilkan Populasi untuk setiap Negara (baris) per Tahun (kolom).',
+  },
 ];
 
 type DropZone = 'rows' | 'columns' | 'values';

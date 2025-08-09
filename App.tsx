@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { GameView } from './components/GameView';
 import { MainMenu } from './components/MainMenu';
@@ -35,8 +34,16 @@ import { PasteSpecialPro } from './components/PasteSpecialPro';
 import { NamedRangeRanger } from './components/NamedRangeRanger';
 import { AbsoluteRelativeRace } from './components/AbsoluteRelativeRace';
 import { SparklineSpeedster } from './components/SparklineSpeedster';
+import { TrainingMode } from './components/TrainingMode';
+import { StartMenu } from './components/StartMenu';
+import { SettingsScreen } from './components/SettingsScreen';
+import { CreditsScreen } from './components/CreditsScreen';
+import { LeaderboardScreen } from './components/LeaderboardScreen';
+import { ExcelChampionshipLobby } from './components/ExcelChampionshipLobby';
+import { ChampionshipView } from './components/ChampionshipView';
 import { levelData } from './constants';
-import type { LevelCompletionStatus, PartNumber, User } from './types';
+import { championshipCases } from './championshipData';
+import type { LevelCompletionStatus, PartNumber, User, AppSettings, ChampionshipCase } from './types';
 import { GameState } from './types';
 import { SpeakerWaveIcon, SpeakerXMarkIcon, ArrowRightOnRectangleIcon, WrenchScrewdriverIcon, UserCircleIcon } from '@heroicons/react/24/solid';
 import { api } from './api';
@@ -51,6 +58,11 @@ interface SessionState {
   user: User | null;
   isLoading: boolean;
 }
+
+export const SettingsContext = React.createContext<{settings: AppSettings; onSettingsChange: (settings: AppSettings) => void;}>({
+    settings: { formulaSeparator: ';', numberFormat: 'eu', dateFormat: 'DD-MM-YYYY', referenceStyle: 'A1' },
+    onSettingsChange: () => {},
+});
 
 const getDefaultCompletionStatus = (): LevelCompletionStatus => {
     return levelData.reduce((acc, _, index) => {
@@ -72,14 +84,43 @@ const App: React.FC = () => {
   const [session, setSession] = useState<SessionState>({ user: null, isLoading: true });
   const [levelCompletion, setLevelCompletion] = useState<LevelCompletionStatus>(getDefaultCompletionStatus());
   
-  const [gameState, setGameState] = useState<GameState>(GameState.PartSelection);
+  const [gameState, setGameState] = useState<GameState>(GameState.StartMenu);
   const [loginView, setLoginView] = useState<'password' | 'google'>('password');
   const [currentLevel, setCurrentLevel] = useState<number>(0);
   const [selectedPart, setSelectedPart] = useState<number | null>(null);
   const [completedPart, setCompletedPart] = useState<number | null>(null);
+  const [currentChampionshipCase, setCurrentChampionshipCase] = useState<ChampionshipCase | null>(null);
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+        const savedSettings = localStorage.getItem('excelSagaSettings');
+        if (savedSettings) {
+            const parsed = JSON.parse(savedSettings);
+            // Gracefully handle old settings and add new ones with defaults
+            return {
+                formulaSeparator: parsed.formulaSeparator === ',' || parsed.formulaSeparator === ';' ? parsed.formulaSeparator : ';',
+                numberFormat: parsed.numberFormat === 'us' ? 'us' : 'eu',
+                dateFormat: ['DD-MM-YYYY', 'MM-DD-YYYY', 'YYYY-MM-DD'].includes(parsed.dateFormat) ? parsed.dateFormat : 'DD-MM-YYYY',
+                referenceStyle: parsed.referenceStyle === 'R1C1' ? 'R1C1' : 'A1',
+            };
+        }
+    } catch (e) { console.error('Failed to load settings'); }
+    // Default for a fresh user (Indonesian style)
+    return { 
+        formulaSeparator: ';',
+        numberFormat: 'eu',
+        dateFormat: 'DD-MM-YYYY',
+        referenceStyle: 'A1',
+    };
+  });
+
+  const handleSettingsChange = (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('excelSagaSettings', JSON.stringify(newSettings));
+  };
 
   const refreshSessionData = useCallback(async () => {
     const userId = localStorage.getItem('excelSagaSession');
@@ -132,15 +173,22 @@ const App: React.FC = () => {
     let targetTrack: string;
     switch (gameState) {
         case GameState.InGame:
+        case GameState.ExcelChampionship:
             targetTrack = musicTracks.game;
             break;
         case GameState.Certificate:
             targetTrack = musicTracks.congrats;
             break;
+        case GameState.StartMenu:
+        case GameState.Settings:
+        case GameState.Credits:
+        case GameState.Leaderboard:
         case GameState.PartSelection:
         case GameState.LevelSelection:
         case GameState.Congratulations:
         case GameState.MiniGameArcade:
+        case GameState.TrainingMode:
+        case GameState.ExcelChampionshipLobby:
         case GameState.FormulaRacer:
         case GameState.CellFinder:
         case GameState.FunctionMatch:
@@ -199,7 +247,7 @@ const App: React.FC = () => {
         localStorage.setItem('excelSagaSession', user.id);
         setSession({ user, isLoading: false });
         setLevelCompletion(user.progress);
-        setGameState(GameState.PartSelection);
+        setGameState(GameState.StartMenu);
     } else {
         throw new Error(error || 'Login gagal');
     }
@@ -211,7 +259,7 @@ const App: React.FC = () => {
         localStorage.setItem('excelSagaSession', user.id);
         setSession({ user, isLoading: false });
         setLevelCompletion(user.progress);
-        setGameState(GameState.PartSelection);
+        setGameState(GameState.StartMenu);
     } else {
         throw new Error(error || 'Login atau pendaftaran Google gagal.');
     }
@@ -222,7 +270,7 @@ const App: React.FC = () => {
     setSession({ user: null, isLoading: false });
     setLevelCompletion(getDefaultCompletionStatus());
     setLoginView('password');
-    setGameState(GameState.PartSelection);
+    setGameState(GameState.StartMenu);
   }, []);
 
   const handleSelectPart = useCallback((part: number) => {
@@ -291,7 +339,7 @@ const App: React.FC = () => {
   }, []);
   
   const handleBackToGame = useCallback(() => {
-    setGameState(GameState.PartSelection);
+    setGameState(GameState.StartMenu);
   }, []);
 
   const handleGoToProfile = useCallback(() => {
@@ -301,6 +349,29 @@ const App: React.FC = () => {
   const handleGoToArcade = useCallback(() => {
       setGameState(GameState.MiniGameArcade);
   }, []);
+
+  const handleStartTraining = useCallback(() => {
+      setGameState(GameState.TrainingMode);
+  }, []);
+
+  const handleStartChampionship = useCallback(() => {
+    setGameState(GameState.ExcelChampionshipLobby);
+  }, []);
+
+  const handleSelectChampionshipCase = useCallback((caseId: number) => {
+    const selectedCase = championshipCases.find(c => c.id === caseId);
+    if (selectedCase) {
+        setCurrentChampionshipCase(selectedCase);
+        setGameState(GameState.ExcelChampionship);
+    }
+  }, []);
+
+  const handleCaseComplete = useCallback(async (caseId: number) => {
+    if (session.user) {
+        await api.saveChampionshipProgress(session.user.id, caseId);
+        await refreshSessionData();
+    }
+  }, [session.user, refreshSessionData]);
 
   const handleStartMiniGame = (game: 'FormulaRacer' | 'CellFinder' | 'FunctionMatch' | 'ChartChamp' | 'ShortcutShowdown' | 'ErrorExterminator' | 'PivotPro' | 'FillHandleFrenzy' | 'ConditionalClues' | 'WhatsTheFunction' | 'VlookupVenture' | 'DataValidationDash' | 'FreezePanesPuzzle' | 'SortFilterSprint' | 'TextSplitter' | 'GoalSeekGuru' | 'KeyboardNinja' | 'ChartElementId' | 'ConditionalLogic' | 'DynamicArrayDrill' | 'WhatIfWizard' | 'PasteSpecialPro' | 'NamedRangeRanger' | 'AbsoluteRelativeRace' | 'SparklineSpeedster') => {
       switch(game) {
@@ -351,7 +422,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <SettingsContext.Provider value={{ settings, onSettingsChange: handleSettingsChange }}>
       <audio ref={audioRef} loop />
       
       {!session.user ? (
@@ -398,6 +469,14 @@ const App: React.FC = () => {
                 </div>
             </header>
             
+            {gameState === GameState.StartMenu && <StartMenu onNavigate={setGameState} />}
+            
+            {gameState === GameState.Settings && <SettingsScreen onBack={() => setGameState(GameState.StartMenu)} />}
+
+            {gameState === GameState.Credits && <CreditsScreen onBack={() => setGameState(GameState.StartMenu)} />}
+
+            {gameState === GameState.Leaderboard && <LeaderboardScreen currentUser={session.user} onBack={() => setGameState(GameState.StartMenu)} />}
+            
             {gameState === GameState.PartSelection && (
                 <PartSelectionScreen 
                     user={session.user}
@@ -405,6 +484,9 @@ const App: React.FC = () => {
                     levelCompletion={levelCompletion} 
                     onBecomeMember={refreshSessionData}
                     onGoToArcade={handleGoToArcade}
+                    onStartTraining={handleStartTraining}
+                    onStartChampionship={handleStartChampionship}
+                    onBack={() => setGameState(GameState.StartMenu)}
                 />
             )}
             
@@ -460,7 +542,22 @@ const App: React.FC = () => {
                     onBack={handleBackToGame}
                 />
             )}
+            
+            {gameState === GameState.ExcelChampionshipLobby && (
+                <ExcelChampionshipLobby onStartCase={handleSelectChampionshipCase} onBack={() => setGameState(GameState.PartSelection)} />
+            )}
 
+            {gameState === GameState.ExcelChampionship && currentChampionshipCase && (
+                <ChampionshipView 
+                    user={session.user}
+                    caseData={currentChampionshipCase} 
+                    onBack={() => setGameState(GameState.ExcelChampionshipLobby)} 
+                    onCaseComplete={handleCaseComplete}
+                />
+            )}
+
+
+            {gameState === GameState.TrainingMode && <TrainingMode onBack={() => setGameState(GameState.PartSelection)} />}
             {gameState === GameState.FormulaRacer && <FormulaRacer onBack={() => setGameState(GameState.MiniGameArcade)} />}
             {gameState === GameState.CellFinder && <CellFinder onBack={() => setGameState(GameState.MiniGameArcade)} />}
             {gameState === GameState.FunctionMatch && <FunctionMatch onBack={() => setGameState(GameState.MiniGameArcade)} />}
@@ -490,7 +587,7 @@ const App: React.FC = () => {
             </div>
         </>
       )}
-    </>
+    </SettingsContext.Provider>
   );
 };
 

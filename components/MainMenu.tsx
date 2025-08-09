@@ -13,6 +13,15 @@ interface MainMenuProps {
   onBackToPartSelection: () => void;
 }
 
+const hoverSound = new Audio('sfx/hover.wav');
+hoverSound.volume = 0.3;
+
+const playHoverSound = () => {
+    hoverSound.currentTime = 0;
+    hoverSound.play().catch(() => {});
+};
+
+
 const PartHeader: React.FC<{ part: PartNumber }> = ({ part }) => {
   const titles: Record<PartNumber, string> = {
     1: 'Bagian 1: Dasar & Menengah',
@@ -129,6 +138,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ part, onSelectLevel, levelCo
               <div
                 key={level.id}
                 onClick={() => isUnlocked && onSelectLevel(globalIndex)}
+                onMouseEnter={() => isUnlocked && playHoverSound()}
                 className={`p-4 rounded-xl border-2 transition-all duration-300 transform flex flex-col justify-between ${isUnlocked ? `bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 cursor-pointer ${borderColor}` : 'bg-slate-200 shadow-inner text-slate-500 border-slate-300'}`}
               >
                 <div>

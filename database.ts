@@ -70,6 +70,7 @@ const loadDb = (): Database => {
         type: 'password',
         password: '123',
         progress: defaultAdminProgress,
+        championshipsCompleted: {},
         fullName: 'Admin Saga',
         phone: '000',
         isAdmin: true,
@@ -111,6 +112,7 @@ const migrateLegacyData = () => {
             id: user,
             type: userType,
             progress: progress,
+            championshipsCompleted: {},
             isMember: false,
             createdAt: Date.now() - 86400000 * 10, // Assume old users are ~10 days old
           };

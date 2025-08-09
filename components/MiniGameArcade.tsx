@@ -66,6 +66,13 @@ const gameData = [
   { id: 'SparklineSpeedster', title: 'Sparkline Speedster', description: 'Pilih jenis sparkline yang tepat untuk visualisasi data.', icon: ChartBarSquareIcon, color: 'bg-purple-100 text-purple-600', buttonColor: 'bg-purple-500 hover:bg-purple-600' },
 ] as const;
 
+const hoverSound = new Audio('sfx/hover.wav');
+hoverSound.volume = 0.3;
+
+const playHoverSound = () => {
+    hoverSound.currentTime = 0;
+    hoverSound.play().catch(() => {});
+};
 
 export const MiniGameArcade: React.FC<MiniGameArcadeProps> = ({ user, levelCompletion, onStartGame, onBack }) => {
   return (
@@ -90,6 +97,7 @@ export const MiniGameArcade: React.FC<MiniGameArcadeProps> = ({ user, levelCompl
           return (
             <div
               key={game.id}
+              onMouseEnter={() => isUnlocked && playHoverSound()}
               className={`bg-white p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col items-center text-center transition-all duration-300 ${isUnlocked ? 'transform hover:-translate-y-1' : 'bg-slate-100'}`}
             >
               <div className={`p-4 rounded-full mb-4 ${isUnlocked ? game.color : 'bg-slate-200 text-slate-400'}`}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { levelData } from '../constants';
 import type { LevelCompletionStatus, Question, User } from '../types';
 import { MascotState } from '../types';
@@ -6,13 +6,40 @@ import { Sidebar } from './Sidebar';
 import { GameTable } from './GameTable';
 import { ActionPanel } from './ActionPanel';
 import { ChevronUpIcon, ChevronDownIcon, LightBulbIcon } from '@heroicons/react/24/solid';
+import { SettingsContext } from '../App';
 
-const renderExplanation = (text: string) => {
+const adaptFormulaToSeparator = (formula: string, separator: ',' | ';'): string => {
+    if (typeof formula !== 'string') return '';
+    let inQuotes = false;
+    let result = '';
+    const otherSeparator = separator === ';' ? ',' : ';';
+    for (const char of formula) {
+        if (char === '"') inQuotes = !inQuotes;
+        if (!inQuotes && char === otherSeparator) {
+            result += separator; // replace with user's preferred separator
+        } else {
+            result += char;
+        }
+    }
+    return result;
+};
+
+// A helper function to adapt strings inside <code> blocks
+const adaptCodeInHtml = (html: string, separator: ',' | ';'): string => {
+    return html.replace(/<code(.*?)>(.*?)<\/code>/g, (match, p1, p2) => {
+        const adaptedCode = adaptFormulaToSeparator(p2, separator);
+        return `<code${p1}>${adaptedCode}</code>`;
+    });
+};
+
+const renderExplanationWithSettings = (text: string, separator: ',' | ';') => {
     if (!text) return { __html: '' };
-    const html = text
+    let html = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`([^`]+)`/g, '<code class="bg-slate-200 text-slate-800 px-1 rounded font-mono">$1</code>')
       .replace(/\n/g, '<br />');
+    
+    html = adaptCodeInHtml(html, separator);
     
     return { __html: html };
 };
@@ -27,21 +54,10 @@ interface GameViewProps {
   onSelectLevel: (levelIndex: number) => void;
 }
 
-const normalizeAnswer = (answer: string): string => {
-    if (typeof answer !== 'string') return '';
-    let inQuotes = false;
-    let result = '';
-    for (const char of answer) {
-        if (char === '"') inQuotes = !inQuotes;
-        if (!inQuotes && char === ' ') continue;
-        if (!inQuotes && char === ';') {
-            result += ',';
-            continue;
-        }
-        result += char;
-    }
-    return result.toLowerCase();
-};
+const normalizeString = (str: string): string => {
+    if (typeof str !== 'string') return '';
+    return str.replace(/\s/g, '').toLowerCase();
+}
 
 export const GameView: React.FC<GameViewProps> = ({
   user,
@@ -52,6 +68,7 @@ export const GameView: React.FC<GameViewProps> = ({
   levelCompletion,
   onSelectLevel
 }) => {
+  const { settings } = useContext(SettingsContext);
   const level = levelData[levelIndex];
 
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
@@ -92,12 +109,12 @@ export const GameView: React.FC<GameViewProps> = ({
   const handleCheckAnswer = useCallback(() => {
     if (!currentQuestion) return;
 
-    const normalizedUserAnswer = normalizeAnswer(userAnswer);
+    const cleanUserAnswer = normalizeString(userAnswer);
     const { correctValue } = currentQuestion.answer;
 
     const isCorrect = Array.isArray(correctValue)
-      ? correctValue.some(val => normalizeAnswer(val) === normalizedUserAnswer)
-      : normalizeAnswer(correctValue) === normalizedUserAnswer;
+      ? correctValue.some(val => normalizeString(adaptFormulaToSeparator(val, settings.formulaSeparator)) === cleanUserAnswer)
+      : normalizeString(adaptFormulaToSeparator(correctValue, settings.formulaSeparator)) === cleanUserAnswer;
     
     if (isCorrect) {
       setIsAnsweredCorrectly(true);
@@ -109,7 +126,7 @@ export const GameView: React.FC<GameViewProps> = ({
       setMascotState(MascotState.Incorrect);
       setTimeout(() => setMascotState(MascotState.Idle), 2000);
     }
-  }, [currentQuestion, userAnswer, onLevelComplete, levelIndex]);
+  }, [currentQuestion, userAnswer, onLevelComplete, levelIndex, settings.formulaSeparator]);
 
   const handleGetHint = useCallback(() => {
     if (currentQuestion) {
@@ -156,6 +173,14 @@ export const GameView: React.FC<GameViewProps> = ({
     );
   }
 
+  const adaptedCorrectValue = Array.isArray(currentQuestion.answer.correctValue) 
+    ? adaptFormulaToSeparator(currentQuestion.answer.correctValue[0], settings.formulaSeparator) 
+    : adaptFormulaToSeparator(currentQuestion.answer.correctValue, settings.formulaSeparator);
+
+  const adaptedAlternatives = Array.isArray(currentQuestion.answer.correctValue) 
+    ? currentQuestion.answer.correctValue.slice(1).map(alt => adaptFormulaToSeparator(alt, settings.formulaSeparator))
+    : [];
+
   return (
     <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
       <Sidebar 
@@ -191,7 +216,7 @@ export const GameView: React.FC<GameViewProps> = ({
                 type="text"
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
-                placeholder={currentQuestion.answer.type === 'formula' ? 'Contoh: =SUM(A1:B1)' : 'Ketik jawabanmu...'}
+                placeholder={currentQuestion.answer.type === 'formula' ? `Contoh: =SUM(A1${settings.formulaSeparator}B1)` : 'Ketik jawabanmu...'}
                 className="flex-grow p-3 bg-slate-800 text-white border-2 border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition font-mono placeholder-slate-400"
                 disabled={isAnsweredCorrectly}
             />
@@ -211,7 +236,7 @@ export const GameView: React.FC<GameViewProps> = ({
         {isAnsweredCorrectly && currentQuestion.explanation && (
             <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-900">
                  <h4 className="font-bold text-blue-900 mb-2">Penjelasan Jawaban:</h4>
-                 <div className="text-sm space-y-2" dangerouslySetInnerHTML={renderExplanation(currentQuestion.explanation)} />
+                 <div className="text-sm space-y-2" dangerouslySetInnerHTML={renderExplanationWithSettings(currentQuestion.explanation, settings.formulaSeparator)} />
             </div>
         )}
 
@@ -219,9 +244,9 @@ export const GameView: React.FC<GameViewProps> = ({
           <div className="mt-4 p-4 rounded-lg bg-sky-100 border border-sky-200 text-sky-800">
             <p className="font-bold mb-1">Jawaban yang Benar:</p>
             <code className="block bg-sky-200 p-2 rounded text-sm font-mono break-words">
-              {Array.isArray(currentQuestion.answer.correctValue) ? currentQuestion.answer.correctValue[0] : currentQuestion.answer.correctValue}
+              {adaptedCorrectValue}
             </code>
-            {Array.isArray(currentQuestion.answer.correctValue) && currentQuestion.answer.correctValue.length > 1 && (
+            {adaptedAlternatives.length > 0 && (
               <div className="mt-2">
                 <button onClick={() => setShowAlternatives(prev => !prev)} className="text-sm text-sky-700 hover:underline font-semibold flex items-center gap-1">
                   {showAlternatives ? (
@@ -239,7 +264,7 @@ export const GameView: React.FC<GameViewProps> = ({
                 {showAlternatives && (
                   <div className="mt-2 pl-2 border-l-2 border-sky-300">
                     <ul className="space-y-1">
-                      {currentQuestion.answer.correctValue.slice(1).map((alt, index) => (
+                      {adaptedAlternatives.map((alt, index) => (
                         <li key={index}>
                           <code className="bg-sky-200 p-1 rounded text-sm font-mono break-words">
                             {alt}

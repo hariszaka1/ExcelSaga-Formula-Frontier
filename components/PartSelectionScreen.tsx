@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import type { LevelCompletionStatus, User } from '../types';
 import { api } from '../api';
-import { LockClosedIcon, BookOpenIcon, AcademicCapIcon, FireIcon, CpuChipIcon, TrophyIcon, StarIcon, WrenchScrewdriverIcon, Cog6ToothIcon, CircleStackIcon, BeakerIcon, SunIcon, SparklesIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
+import { LockClosedIcon, BookOpenIcon, AcademicCapIcon, FireIcon, CpuChipIcon, TrophyIcon, StarIcon, WrenchScrewdriverIcon, Cog6ToothIcon, CircleStackIcon, BeakerIcon, SunIcon, SparklesIcon, CheckCircleIcon, ArrowRightIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/solid';
 
 interface MembershipCTAProps {
   onVerify: (code: string) => void;
@@ -10,6 +9,14 @@ interface MembershipCTAProps {
   error: string;
   onCodeChange: () => void;
 }
+
+const hoverSound = new Audio('sfx/hover.wav');
+hoverSound.volume = 0.3;
+
+const playHoverSound = () => {
+    hoverSound.currentTime = 0;
+    hoverSound.play().catch(() => {});
+};
 
 const MembershipCTA: React.FC<MembershipCTAProps> = ({ onVerify, isLoading, error, onCodeChange }) => {
   const [code, setCode] = useState('');
@@ -120,14 +127,18 @@ interface PartSelectionScreenProps {
   levelCompletion: LevelCompletionStatus;
   onBecomeMember: () => void;
   onGoToArcade: () => void;
+  onStartTraining: () => void;
+  onStartChampionship: () => void;
+  onBack: () => void;
 }
 
-export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, onSelectPart, levelCompletion, onBecomeMember, onGoToArcade }) => {
+export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, onSelectPart, levelCompletion, onBecomeMember, onGoToArcade, onStartTraining, onStartChampionship, onBack }) => {
     const [isVerifying, setIsVerifying] = useState(false);
     const [codeError, setCodeError] = useState('');
     
     const isMember = user.isMember || user.isAdmin;
     const canEnterArcade = user.isAdmin || !!levelCompletion[9]; // Unlocked after completing part 1 (level index 9)
+    const canEnterChampionship = isMember;
 
     const handleVerifyCode = async (accessCode: string) => {
         if (accessCode.trim() !== 'NN1q4E9F361kpiZqLptIEOnnL') {
@@ -169,12 +180,33 @@ export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, 
 
     return (
         <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-700 mb-8">Pilih Bagian Petualanganmu</h2>
-            
-            <div className="mb-10">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-700">Pilih Bagian Petualanganmu</h2>
+                <button 
+                  onClick={onBack}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors"
+                >
+                  <ArrowUturnLeftIcon className="w-5 h-5"/>
+                  Menu Utama
+                </button>
+            </div>
+
+            <div className="mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div 
+                    onClick={onStartTraining}
+                    onMouseEnter={playHoverSound}
+                    className="p-6 rounded-2xl shadow-lg flex items-center justify-center gap-4 ring-4 ring-offset-2 ring-offset-green-50 transition-all duration-300 bg-gradient-to-r from-green-500 to-teal-500 text-white ring-green-200 cursor-pointer hover:shadow-2xl hover:-translate-y-1"
+                >
+                    <BeakerIcon className="w-10 h-10 text-yellow-300 transform -rotate-12"/>
+                    <div className="text-center">
+                        <h3 className="text-2xl font-bold">Mode Latihan</h3>
+                        <p className="mt-1 opacity-90 text-sm">Latihan tanpa batas dengan tantangan acak!</p>
+                    </div>
+                </div>
                 <div 
                     onClick={canEnterArcade ? onGoToArcade : undefined}
-                    className={`md:col-span-2 lg:col-span-5 p-6 rounded-2xl shadow-lg flex items-center justify-center gap-4 ring-4 ring-offset-2 ring-offset-blue-50 transition-all duration-300 ${
+                    onMouseEnter={() => canEnterArcade && playHoverSound()}
+                    className={`p-6 rounded-2xl shadow-lg flex items-center justify-center gap-4 ring-4 ring-offset-2 ring-offset-blue-50 transition-all duration-300 ${
                         canEnterArcade 
                         ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white ring-indigo-200 cursor-pointer hover:shadow-2xl hover:-translate-y-1'
                         : 'bg-slate-300 text-slate-500 ring-slate-200 cursor-not-allowed'
@@ -187,7 +219,6 @@ export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, 
                                 <h3 className="text-2xl font-bold">Arcade Mode</h3>
                                 <p className="mt-1 opacity-90 text-sm">Mainkan mini-game seru untuk istirahat!</p>
                             </div>
-                            <SparklesIcon className="w-10 h-10 text-yellow-300 transform rotate-12"/>
                         </>
                      ) : (
                         <>
@@ -196,7 +227,33 @@ export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, 
                                 <h3 className="text-2xl font-bold text-slate-700">Arcade Mode</h3>
                                 <p className="mt-1 text-sm font-semibold">Selesaikan Bagian 1 untuk membuka</p>
                             </div>
+                        </>
+                     )}
+                </div>
+                 <div 
+                    onClick={canEnterChampionship ? onStartChampionship : undefined}
+                    onMouseEnter={() => canEnterChampionship && playHoverSound()}
+                    className={`p-6 rounded-2xl shadow-lg flex items-center justify-center gap-4 ring-4 ring-offset-2 ring-offset-amber-50 transition-all duration-300 ${
+                        canEnterChampionship 
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white ring-amber-200 cursor-pointer hover:shadow-2xl hover:-translate-y-1'
+                        : 'bg-slate-300 text-slate-500 ring-slate-200 cursor-not-allowed'
+                    }`}
+                >
+                     {canEnterChampionship ? (
+                        <>
+                            <TrophyIcon className="w-10 h-10 text-yellow-200 transform -rotate-12"/>
+                            <div className="text-center">
+                                <h3 className="text-2xl font-bold">Excel Championship</h3>
+                                <p className="mt-1 opacity-90 text-sm">Selesaikan studi kasus tingkat lanjut!</p>
+                            </div>
+                        </>
+                     ) : (
+                        <>
                             <LockClosedIcon className="w-8 h-8 text-slate-600"/>
+                            <div className="text-center">
+                                <h3 className="text-2xl font-bold text-slate-700">Excel Championship</h3>
+                                <p className="mt-1 text-sm font-semibold">Khusus Member Premium</p>
+                            </div>
                         </>
                      )}
                 </div>
@@ -211,7 +268,7 @@ export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {partData.map(part => {
                     const progressUnlocked = isPartUnlockedByProgress(part.id);
-                    const membershipRequired = part.id > 1;
+                    const membershipRequired = part.id > 3;
                     const canAccess = !membershipRequired || isMember;
                     const isLocked = !progressUnlocked || !canAccess;
                     
@@ -227,6 +284,7 @@ export const PartSelectionScreen: React.FC<PartSelectionScreenProps> = ({ user, 
                         <div
                             key={part.id}
                             onClick={() => !isLocked && onSelectPart(part.id)}
+                            onMouseEnter={() => !isLocked && playHoverSound()}
                             className={`p-6 rounded-2xl shadow-lg border-2 transition-all duration-300 flex flex-col items-center text-center 
                                 ${!isLocked
                                 ? `bg-white ${uiColors.border} hover:shadow-2xl hover:-translate-y-2 cursor-pointer`

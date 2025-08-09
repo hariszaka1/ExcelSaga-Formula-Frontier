@@ -1,4 +1,3 @@
-
 import type { ComponentType } from 'react';
 
 export interface Answer {
@@ -29,6 +28,10 @@ export interface Level {
 export type LevelCompletionStatus = Record<number, boolean>;
 
 export enum GameState {
+  StartMenu,
+  Settings,
+  Credits,
+  Leaderboard,
   PartSelection,
   LevelSelection,
   InGame,
@@ -62,6 +65,9 @@ export enum GameState {
   NamedRangeRanger,
   AbsoluteRelativeRace,
   SparklineSpeedster,
+  TrainingMode,
+  ExcelChampionshipLobby,
+  ExcelChampionship,
 }
 
 export enum MascotState {
@@ -106,6 +112,7 @@ export interface User {
   type: 'password' | 'google';
   password?: string; // Optional password, used to unlock answers. Can be set for both account types.
   progress: LevelCompletionStatus;
+  championshipsCompleted: Record<number, boolean>;
   fullName?: string;
   phone?: string;
   isAdmin?: boolean;
@@ -116,3 +123,42 @@ export interface User {
 }
 
 export type PartNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+export interface TrainingChallenge {
+  challenge: string;
+  table: {
+    headers: string[];
+    rows: (string | number)[][];
+  };
+  answer: Answer;
+  explanation: string;
+  targetCell: { r: number; c: number }; // 0-indexed
+  correctResult: string | number;
+}
+
+export interface AppSettings {
+  formulaSeparator: ',' | ';';
+  numberFormat: 'us' | 'eu'; // us: 1,234.56 | eu: 1.234,56
+  dateFormat: 'DD-MM-YYYY' | 'MM-DD-YYYY' | 'YYYY-MM-DD';
+  referenceStyle: 'A1' | 'R1C1';
+}
+
+export interface ChampionshipTask {
+    task: string;
+    targetCell: { r: number; c: number }; // 0-indexed
+    answer: Answer;
+    correctResult: string | number;
+    explanation: string;
+}
+
+export interface ChampionshipCase {
+    id: number;
+    title: string;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    description: string;
+    table: {
+        headers: string[];
+        rows: (string | number)[][];
+    };
+    tasks: ChampionshipTask[];
+}
